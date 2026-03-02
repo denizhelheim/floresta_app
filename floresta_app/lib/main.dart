@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
@@ -13,13 +15,48 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Floresta App',
+      title: 'Floresta',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF1C3D32),
+          surface: const Color(0xFFF4FAF7),
+          primary: const Color(0xFF1C3D32),
+          secondary: const Color(0xFF4CAF50),
+          tertiary: const Color(0xFF26A69A),
+        ),
+        textTheme: GoogleFonts.quicksandTextTheme(
+          ThemeData.light().textTheme,
+        ).copyWith(
+          headlineLarge: const TextStyle(
+            fontSize: 32,
+            fontWeight: FontWeight.w600,
+            height: 1.05,
+          ),
+          titleLarge: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+          ),
+          titleMedium: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w500,
+          ),
+          bodyLarge: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+          ),
+          bodyMedium: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w400,
+          ),
+        ),
         scaffoldBackgroundColor: const Color(0xFFF4FAF7),
         appBarTheme: const AppBarTheme(
-          titleTextStyle: TextStyle(color: Colors.white),
+          elevation: 0,
+          backgroundColor: Color(0xFF1C3D32),
+          foregroundColor: Colors.white,
+          centerTitle: true,
         ),
       ),
       home: const HomeScreen(),
@@ -35,6 +72,20 @@ class MyApp extends StatelessWidget {
   }
 }
 
+// Ortak Hero geçiş animasyonu (Android'de daha stabil)
+Widget _heroFlightShuttleBuilder(
+  BuildContext flightContext,
+  Animation<double> animation,
+  HeroFlightDirection flightDirection,
+  BuildContext fromHeroContext,
+  BuildContext toHeroContext,
+) {
+  return Material(
+    color: Colors.transparent,
+    child: fromHeroContext.widget,
+  );
+}
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -43,24 +94,25 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _fadeAnimation;
-  late Animation<double> _scaleAnimation;
+  late final AnimationController _controller;
+  late final Animation<double> _fadeAnimation;
+  late final Animation<double> _scaleAnimation;
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 950),
       vsync: this,
     )..forward();
 
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOutCubic),
+    _fadeAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOutQuart,
     );
 
-    _scaleAnimation = Tween<double>(begin: 0.98, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOutCubic),
+    _scaleAnimation = Tween<double>(begin: 0.96, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutQuart),
     );
   }
 
@@ -83,33 +135,22 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 opacity: _fadeAnimation,
                 child: Text(
                   "Merhaba,",
-                  style: GoogleFonts.quicksand(
-                    fontSize: 32,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF2C3E50),
-                    height: 1.05,
-                  ),
+                  style: Theme.of(context).textTheme.headlineLarge,
                 ),
               ),
               FadeTransition(
                 opacity: _fadeAnimation,
                 child: Text(
-                  "bugün nasılsın?",
-                  style: GoogleFonts.quicksand(
-                    fontSize: 32,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF2C3E50),
-                    height: 1.05,
-                  ),
+                  "bugün nasılsın? 🌿",
+                  style: Theme.of(context).textTheme.headlineLarge,
                 ),
               ),
               const SizedBox(height: 8),
               FadeTransition(
                 opacity: _fadeAnimation,
                 child: Text(
-                  "Günlük sağlık yolculuğun burada başlıyor 🌿",
-                  style: GoogleFonts.quicksand(
-                    fontSize: 15,
+                  "Sağlık yolculuğun burada başlıyor",
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     color: Colors.grey[600],
                   ),
                 ),
@@ -118,48 +159,37 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               const SizedBox(height: 48),
 
               SizedBox(
-                height: 300,
+                height: 310,
                 child: PageView(
-                  controller: PageController(viewportFraction: 0.9),
+                  physics: const BouncingScrollPhysics(),
+                  controller: PageController(viewportFraction: 0.88, initialPage: 0),
                   children: [
-                    GestureDetector(
-                      onTap: () => Navigator.pushNamed(context, '/steps'),
-                      child: ScaleTransition(
-                        scale: _scaleAnimation,
-                        child: FadeTransition(
-                          opacity: _fadeAnimation,
-                          child: _buildStepsCard(),
-                        ),
+                    ScaleTransition(
+                      scale: _scaleAnimation,
+                      child: FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: _buildStepsCard(context),
                       ),
                     ),
-                    GestureDetector(
-                      onTap: () => Navigator.pushNamed(context, '/heart'),
-                      child: ScaleTransition(
-                        scale: _scaleAnimation,
-                        child: FadeTransition(
-                          opacity: _fadeAnimation,
-                          child: _buildHeartCard(),
-                        ),
+                    ScaleTransition(
+                      scale: _scaleAnimation,
+                      child: FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: _buildHeartCard(context),
                       ),
                     ),
-                    GestureDetector(
-                      onTap: () => Navigator.pushNamed(context, '/sleep'),
-                      child: ScaleTransition(
-                        scale: _scaleAnimation,
-                        child: FadeTransition(
-                          opacity: _fadeAnimation,
-                          child: _buildSleepCard(),
-                        ),
+                    ScaleTransition(
+                      scale: _scaleAnimation,
+                      child: FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: _buildSleepCard(context),
                       ),
                     ),
-                    GestureDetector(
-                      onTap: () => Navigator.pushNamed(context, '/stress'),
-                      child: ScaleTransition(
-                        scale: _scaleAnimation,
-                        child: FadeTransition(
-                          opacity: _fadeAnimation,
-                          child: _buildStressCard(),
-                        ),
+                    ScaleTransition(
+                      scale: _scaleAnimation,
+                      child: FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: _buildStressCard(context),
                       ),
                     ),
                   ],
@@ -168,104 +198,22 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
               const SizedBox(height: 52),
 
-              ScaleTransition(
-                scale: _scaleAnimation,
-                child: FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: Container(
-                    width: double.infinity,
-                    height: 72,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(32),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF1C3D32).withValues(alpha: 0.35),
-                          blurRadius: 25,
-                          offset: const Offset(0, 12),
-                        ),
-                      ],
-                    ),
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pushNamed(context, '/ai_report');
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1C3D32),
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(32),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.auto_awesome, size: 28),
-                          const SizedBox(width: 14),
-                          Text(
-                            "Yapay Zeka Raporu Al",
-                            style: GoogleFonts.quicksand(
-                              fontSize: 21,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0.8,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+              // AI Raporu Butonu
+              _buildActionButton(
+                context,
+                icon: Icons.auto_awesome,
+                label: "Yapay Zeka Raporu Al",
+                onPressed: () => Navigator.pushNamed(context, '/ai_report'),
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
 
-              ScaleTransition(
-                scale: _scaleAnimation,
-                child: FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: Container(
-                    width: double.infinity,
-                    height: 72,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(32),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF1C3D32).withValues(alpha: 0.35),
-                          blurRadius: 25,
-                          offset: const Offset(0, 12),
-                        ),
-                      ],
-                    ),
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pushNamed(context, '/bluetooth');
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1C3D32),
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(32),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.bluetooth, size: 28),
-                          const SizedBox(width: 14),
-                          Text(
-                            "Bluetooth Cihazı Ara",
-                            style: GoogleFonts.quicksand(
-                              fontSize: 21,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0.8,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+              // Bluetooth Butonu
+              _buildActionButton(
+                context,
+                icon: Icons.bluetooth,
+                label: "Bluetooth Cihazı Tara",
+                onPressed: () => Navigator.pushNamed(context, '/bluetooth'),
               ),
 
               const SizedBox(height: 40),
@@ -276,79 +224,44 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
-  Widget _buildStepsCard() {
-    const int steps = 12456;
-    const int goal = 15000;
-
-    return Hero(
-      tag: 'steps_card',
-      flightShuttleBuilder: (flightContext, animation, flightDirection, fromHeroContext, toHeroContext) {
-        return Material(
-          color: Colors.transparent,
-          child: fromHeroContext.widget,
-        );
-      },
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.85),
-          borderRadius: BorderRadius.circular(32),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 30,
-              offset: const Offset(0, 15),
-            ),
-          ],
+  Widget _buildActionButton(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required VoidCallback onPressed,
+  }) {
+    return Container(
+      width: double.infinity,
+      height: 72,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(32),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF1C3D32).withOpacity(0.28),
+            blurRadius: 22,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF1C3D32),
+          foregroundColor: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+          padding: const EdgeInsets.symmetric(horizontal: 24),
         ),
         child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: const Color(0xFFE8F5E9),
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: const Icon(
-                Icons.directions_walk_rounded,
-                size: 52,
-                color: Color(0xFF4CAF50),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Adım Sayısı",
-                    style: GoogleFonts.quicksand(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.grey[700],
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    steps.toString().replaceAllMapped(
-                        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-                        (Match m) => '${m[1]}.'),
-                    style: GoogleFonts.quicksand(
-                      fontSize: 36,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF2C3E50),
-                      height: 1,
-                    ),
-                  ),
-                  Text(
-                    "hedef $goal",
-                    style: GoogleFonts.quicksand(
-                      fontSize: 15,
-                      color: Colors.grey[500],
-                    ),
-                  ),
-                ],
+            Icon(icon, size: 28),
+            const SizedBox(width: 14),
+            Text(
+              label,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: Colors.white,
+                letterSpacing: 0.6,
               ),
             ),
           ],
@@ -357,30 +270,112 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
-  Widget _buildHeartCard() {
-    return Hero(
-      tag: 'heart_card',
-      flightShuttleBuilder: (flightContext, animation, flightDirection, fromHeroContext, toHeroContext) {
-        return Material(
-          color: Colors.transparent,
-          child: fromHeroContext.widget,
-        );
-      },
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.85),
-          borderRadius: BorderRadius.circular(32),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 30,
-              offset: const Offset(0, 15),
-            ),
-          ],
+  // Ortak metrik kartı (kod tekrarı sıfırlandı)
+  Widget _buildMetricCard({
+    required BuildContext context,
+    required String tag,
+    required String title,
+    required String value,
+    required String subtitle,
+    required IconData icon,
+    required Color iconColor,
+    required Color bgColor,
+    required VoidCallback onTap,
+    Widget? extraChild,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Hero(
+        tag: tag,
+        flightShuttleBuilder: _heroFlightShuttleBuilder,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.88),
+            borderRadius: BorderRadius.circular(32),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.055),
+                blurRadius: 28,
+                offset: const Offset(0, 14),
+              ),
+            ],
+          ),
+          child: extraChild ??
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      color: bgColor,
+                      borderRadius: BorderRadius.circular(26),
+                    ),
+                    child: Icon(
+                      icon,
+                      size: 54,
+                      color: iconColor,
+                    ),
+                  ),
+                  const SizedBox(width: 18),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            color: Colors.grey[700],
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          value,
+                          style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                            color: const Color(0xFF2C3E50),
+                            height: 1.0,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          subtitle,
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Colors.grey[500],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
         ),
-        child: Column(
+      ),
+    );
+  }
+
+  Widget _buildStepsCard(BuildContext context) => _buildMetricCard(
+        context: context,
+        tag: 'steps_card',
+        title: "Adım Sayısı",
+        value: "12.456",
+        subtitle: "hedef 15.000",
+        icon: Icons.directions_walk_rounded,
+        iconColor: const Color(0xFF4CAF50),
+        bgColor: const Color(0xFFE8F5E9),
+        onTap: () => Navigator.pushNamed(context, '/steps'),
+      );
+
+  Widget _buildHeartCard(BuildContext context) => _buildMetricCard(
+        context: context,
+        tag: 'heart_card',
+        title: "Nabız",
+        value: "78 bpm",
+        subtitle: "Normal aralıkta",
+        icon: Icons.monitor_heart_rounded,
+        iconColor: const Color(0xFFEF5350),
+        bgColor: const Color(0xFFFFEBEE),
+        onTap: () => Navigator.pushNamed(context, '/heart'),
+        extraChild: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
@@ -393,7 +388,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   ),
                   child: const Icon(
                     Icons.monitor_heart_rounded,
-                    size: 46,
+                    size: 48,
                     color: Color(0xFFEF5350),
                   ),
                 ),
@@ -403,17 +398,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   children: [
                     Text(
                       "Nabız",
-                      style: GoogleFonts.quicksand(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w500,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         color: Colors.grey[700],
                       ),
                     ),
                     Text(
                       "78 bpm",
-                      style: GoogleFonts.quicksand(
-                        fontSize: 30,
-                        fontWeight: FontWeight.w700,
+                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                         color: const Color(0xFF2C3E50),
                       ),
                     ),
@@ -421,11 +412,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             SizedBox(
-              height: 120,
+              height: 118,
               child: CustomPaint(
-                size: const Size(double.infinity, 120),
+                size: const Size(double.infinity, 118),
                 painter: HeartRateGraphPainter(),
               ),
             ),
@@ -433,279 +424,117 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  "08:00",
-                  style: GoogleFonts.quicksand(
-                      fontSize: 13, color: Colors.grey[500]),
-                ),
-                Text(
-                  "Şimdi",
-                  style: GoogleFonts.quicksand(
-                      fontSize: 13, color: Colors.grey[500]),
-                ),
+                Text("08:00", style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[500])),
+                Text("Şimdi", style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[500])),
               ],
             ),
           ],
         ),
-      ),
-    );
-  }
+      );
 
-  Widget _buildSleepCard() {
-    return Hero(
-      tag: 'sleep_card',
-      flightShuttleBuilder: (flightContext, animation, flightDirection, fromHeroContext, toHeroContext) {
-        return Material(
-          color: Colors.transparent,
-          child: fromHeroContext.widget,
-        );
-      },
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.85),
-          borderRadius: BorderRadius.circular(32),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 30,
-              offset: const Offset(0, 15),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: const Color(0xFFE3F2FD),
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: const Icon(
-                Icons.nightlight_round,
-                size: 52,
-                color: Color(0xFF64B5F6),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Uyku",
-                    style: GoogleFonts.quicksand(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.grey[700],
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    "7s 32dk",
-                    style: GoogleFonts.quicksand(
-                      fontSize: 32,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF2C3E50),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(Icons.star_rounded,
-                          size: 18, color: Color(0xFFFFD700)),
-                      const SizedBox(width: 6),
-                      Text(
-                        "Kaliteli uyku • %81",
-                        style: GoogleFonts.quicksand(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
-                          color: const Color(0xFF4CAF50),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  Widget _buildSleepCard(BuildContext context) => _buildMetricCard(
+        context: context,
+        tag: 'sleep_card',
+        title: "Uyku",
+        value: "7s 32dk",
+        subtitle: "Kaliteli • %81",
+        icon: Icons.nightlight_round,
+        iconColor: const Color(0xFF64B5F6),
+        bgColor: const Color(0xFFE3F2FD),
+        onTap: () => Navigator.pushNamed(context, '/sleep'),
+      );
 
-  Widget _buildStressCard() {
-    const int stress = 28;
-
-    return Hero(
-      tag: 'stress_card',
-      flightShuttleBuilder: (flightContext, animation, flightDirection, fromHeroContext, toHeroContext) {
-        return Material(
-          color: Colors.transparent,
-          child: fromHeroContext.widget,
-        );
-      },
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.85),
-          borderRadius: BorderRadius.circular(32),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 30,
-              offset: const Offset(0, 15),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: const Color(0xFFE0F2F1),
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: const Icon(
-                Icons.spa_rounded,
-                size: 52,
-                color: Color(0xFF26A69A),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Stres Seviyesi",
-                    style: GoogleFonts.quicksand(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.grey[700],
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    "$stress%",
-                    style: GoogleFonts.quicksand(
-                      fontSize: 36,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF2C3E50),
-                      height: 1,
-                    ),
-                  ),
-                  Text(
-                    "Düşük • Rahat",
-                    style: GoogleFonts.quicksand(
-                      fontSize: 15,
-                      color: Colors.grey[500],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  Widget _buildStressCard(BuildContext context) => _buildMetricCard(
+        context: context,
+        tag: 'stress_card',
+        title: "Stres Seviyesi",
+        value: "%28",
+        subtitle: "Düşük • Rahat",
+        icon: Icons.spa_rounded,
+        iconColor: const Color(0xFF26A69A),
+        bgColor: const Color(0xFFE0F2F1),
+        onTap: () => Navigator.pushNamed(context, '/stress'),
+      );
 }
 
 class HeartRateGraphPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final fillPath = Path();
-    fillPath.moveTo(0, size.height * 0.62);
+    final fillPath = Path()..moveTo(0, size.height * 0.65);
 
-    for (int i = 0; i <= 42; i++) {
-      final x = i * (size.width / 42);
-      final y = size.height * 0.55 +
-          28 * math.sin(i * 0.42) +
-          12 * math.sin(i * 0.85);
+    for (int i = 0; i <= 48; i++) {
+      final x = i * (size.width / 48);
+      final y = size.height * 0.56 + 26 * math.sin(i * 0.38) + 11 * math.sin(i * 0.91);
       fillPath.lineTo(x, y);
     }
-
     fillPath.lineTo(size.width, size.height);
     fillPath.lineTo(0, size.height);
     fillPath.close();
 
-    final fillPaint = Paint()
-      ..color = const Color(0xFFEF5350).withValues(alpha: 0.09)
-      ..style = PaintingStyle.fill;
-    canvas.drawPath(fillPath, fillPaint);
+    canvas.drawPath(
+      fillPath,
+      Paint()
+        ..color = const Color(0xFFEF5350).withOpacity(0.09)
+        ..style = PaintingStyle.fill,
+    );
 
-    final linePaint = Paint()
-      ..color = const Color(0xFFEF5350)
-      ..strokeWidth = 5.5
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-
-    final linePath = Path();
-    linePath.moveTo(0, size.height * 0.62);
-
-    for (int i = 0; i <= 42; i++) {
-      final x = i * (size.width / 42);
-      final y = size.height * 0.55 +
-          28 * math.sin(i * 0.42) +
-          12 * math.sin(i * 0.85);
+    final linePath = Path()..moveTo(0, size.height * 0.65);
+    for (int i = 0; i <= 48; i++) {
+      final x = i * (size.width / 48);
+      final y = size.height * 0.56 + 26 * math.sin(i * 0.38) + 11 * math.sin(i * 0.91);
       linePath.lineTo(x, y);
     }
 
-    canvas.drawPath(linePath, linePaint);
+    canvas.drawPath(
+      linePath,
+      Paint()
+        ..color = const Color(0xFFEF5350)
+        ..strokeWidth = 5.2
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round,
+    );
 
-    final glowPaint = Paint()
-      ..color = const Color(0xFFEF5350).withValues(alpha: 0.25)
-      ..strokeWidth = 9
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
-    canvas.drawPath(linePath, glowPaint);
+    canvas.drawPath(
+      linePath,
+      Paint()
+        ..color = const Color(0xFFEF5350).withOpacity(0.22)
+        ..strokeWidth = 9.5
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
+    );
   }
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
+// Detay ekranları (Hero + temiz tema kullanımı)
 class StepsDetailScreen extends StatelessWidget {
   const StepsDetailScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    const int steps = 12456;
-    const int goal = 15000;
-    const double progress = steps / goal;
-
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Adım Sayısı Detayları", style: GoogleFonts.quicksand()),
-        backgroundColor: const Color(0xFF1C3D32),
-      ),
+      appBar: AppBar(title: const Text("Adım Detayları")),
       body: Center(
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(32),
           child: Hero(
             tag: 'steps_card',
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  "Bugünkü Adımlar: $steps",
-                  style: GoogleFonts.quicksand(fontSize: 32, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 16),
+                Text("12.456", style: Theme.of(context).textTheme.displayLarge),
+                const Text("adım", style: TextStyle(fontSize: 18, color: Colors.grey)),
+                const SizedBox(height: 40),
                 const CircularProgressIndicator(
-                  value: progress,
-                  strokeWidth: 12,
+                  value: 0.83,
+                  strokeWidth: 14,
                   valueColor: AlwaysStoppedAnimation(Color(0xFF4CAF50)),
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  "Hedef: $goal (%${(progress * 100).round()})",
-                  style: GoogleFonts.quicksand(fontSize: 24),
-                ),
+                const SizedBox(height: 24),
+                Text("Hedef: 15.000 (%83)", style: Theme.of(context).textTheme.headlineSmall),
               ],
             ),
           ),
@@ -721,27 +550,23 @@ class HeartDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Nabız Detayları", style: GoogleFonts.quicksand()),
-        backgroundColor: const Color(0xFF1C3D32),
-      ),
+      appBar: AppBar(title: const Text("Nabız Detayları")),
       body: Center(
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(32),
           child: Hero(
             tag: 'heart_card',
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  "Ortalama Nabız: 78 bpm",
-                  style: GoogleFonts.quicksand(fontSize: 32, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 24),
+                Text("78 bpm", style: Theme.of(context).textTheme.displayLarge),
+                const Text("ortalama nabız", style: TextStyle(fontSize: 18, color: Colors.grey)),
+                const SizedBox(height: 32),
                 SizedBox(
-                  height: 200,
+                  height: 220,
                   child: CustomPaint(
                     painter: HeartRateGraphPainter(),
+                    size: const Size(double.infinity, 220),
                   ),
                 ),
               ],
@@ -759,27 +584,17 @@ class SleepDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Uyku Detayları", style: GoogleFonts.quicksand()),
-        backgroundColor: const Color(0xFF1C3D32),
-      ),
+      appBar: AppBar(title: const Text("Uyku Detayları")),
       body: Center(
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(32),
           child: Hero(
             tag: 'sleep_card',
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  "Uyku Süresi: 7s 32dk",
-                  style: GoogleFonts.quicksand(fontSize: 32, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  "Kalite: %81 (Kaliteli)",
-                  style: GoogleFonts.quicksand(fontSize: 24),
-                ),
+                Text("7s 32dk", style: Theme.of(context).textTheme.displayLarge),
+                const Text("kaliteli uyku • %81", style: TextStyle(fontSize: 20, color: Color(0xFF4CAF50))),
               ],
             ),
           ),
@@ -794,36 +609,23 @@ class StressDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const int stress = 28;
-    const double progress = stress / 100.0;
-
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Stres Detayları", style: GoogleFonts.quicksand()),
-        backgroundColor: const Color(0xFF1C3D32),
-      ),
+      appBar: AppBar(title: const Text("Stres Detayları")),
       body: Center(
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(32),
           child: Hero(
             tag: 'stress_card',
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  "Stres Seviyesi: $stress%",
-                  style: GoogleFonts.quicksand(fontSize: 32, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 16),
+                Text("%28", style: Theme.of(context).textTheme.displayLarge),
+                const Text("Düşük seviye", style: TextStyle(fontSize: 20, color: Color(0xFF26A69A))),
+                const SizedBox(height: 32),
                 const CircularProgressIndicator(
-                  value: progress,
-                  strokeWidth: 12,
+                  value: 0.28,
+                  strokeWidth: 14,
                   valueColor: AlwaysStoppedAnimation(Color(0xFF26A69A)),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  "Durum: Düşük • Rahat",
-                  style: GoogleFonts.quicksand(fontSize: 24),
                 ),
               ],
             ),
@@ -840,31 +642,25 @@ class AIReportScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Yapay Zeka Sağlık Raporu", style: GoogleFonts.quicksand()),
-        backgroundColor: const Color(0xFF1C3D32),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
+      appBar: AppBar(title: const Text("Yapay Zeka Raporu")),
+      body: const Padding(
+        padding: EdgeInsets.all(28),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Text("Bugün harikasın!", style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700)),
+            SizedBox(height: 12),
             Text(
-              "Genel Özet:",
-              style: GoogleFonts.quicksand(fontSize: 28, fontWeight: FontWeight.bold),
+              "• Adımlar hedefin %83'üne ulaştı\n"
+              "• Nabız tamamen normal aralıkta\n"
+              "• Uyku kalitesi yüksek\n"
+              "• Stres seviyesi çok düşük",
+              style: TextStyle(fontSize: 17, height: 1.6),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 32),
             Text(
-              "Adımlar: 12.456 / 15.000 (%83)\n"
-              "Nabız: 78 bpm (Normal)\n"
-              "Uyku: 7s 32dk (%81 kaliteli)\n"
-              "Stres: %28 (Düşük)",
-              style: GoogleFonts.quicksand(fontSize: 18),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              "Öneriler: Daha fazla adım atın, stres düşük seviyede tutun. 🌿",
-              style: GoogleFonts.quicksand(fontSize: 18, color: Colors.green[700]),
+              "Öneri: Akşam 20 dakikalık hafif yürüyüş yap, daha derin uyku için ekranı erken kapat.",
+              style: TextStyle(fontSize: 17, color: Color(0xFF1C3D32), fontWeight: FontWeight.w500),
             ),
           ],
         ),
@@ -873,6 +669,7 @@ class AIReportScreen extends StatelessWidget {
   }
 }
 
+// Android'de en stabil Bluetooth tarama (tüm iyileştirmeler burada)
 class BluetoothScanScreen extends StatefulWidget {
   const BluetoothScanScreen({super.key});
 
@@ -883,6 +680,7 @@ class BluetoothScanScreen extends StatefulWidget {
 class _BluetoothScanScreenState extends State<BluetoothScanScreen> {
   List<ScanResult> _scanResults = [];
   bool _isScanning = false;
+  StreamSubscription<List<ScanResult>>? _scanSubscription;
 
   @override
   void initState() {
@@ -890,142 +688,140 @@ class _BluetoothScanScreenState extends State<BluetoothScanScreen> {
     _startScan();
   }
 
-  void _startScan() async {
+  @override
+  void dispose() {
+    _scanSubscription?.cancel();
+    super.dispose();
+  }
+
+  void _showMessage(String message) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
+      );
+    }
+  }
+
+  Future<void> _startScan() async {
+    if (_isScanning) return;
+
     setState(() {
       _isScanning = true;
       _scanResults.clear();
     });
 
-    bool isSupported = await FlutterBluePlus.isSupported;
-    if (!isSupported) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Bluetooth desteklenmiyor.")),
-      );
-      setState(() {
-        _isScanning = false;
-      });
-      return;
-    }
-
-    // Adapter state'i dinle ve on olana kadar bekle
-    await for (var state in FlutterBluePlus.adapterState) {
-      if (state == BluetoothAdapterState.on) {
-        break;
-      } else if (state == BluetoothAdapterState.off) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Bluetooth'u açın.")),
-          );
-        }
-        setState(() {
-          _isScanning = false;
-        });
+    try {
+      if (!await FlutterBluePlus.isSupported) {
+        _showMessage("Bluetooth bu cihazda desteklenmiyor.");
         return;
       }
-    }
 
-    // Tarama başlat
-    await FlutterBluePlus.startScan(timeout: const Duration(seconds: 10));
-
-    // Scan sonuçlarını dinle
-    final subscription = FlutterBluePlus.scanResults.listen((results) {
-      setState(() {
-        _scanResults = results;
-      });
-    });
-
-    // Tarama bitince durdur
-    await Future.delayed(const Duration(seconds: 10));
-    await FlutterBluePlus.stopScan();
-    subscription.cancel();
-    setState(() {
-      _isScanning = false;
-    });
-  }
-
-  void _connectToDevice(BluetoothDevice device) async {
-    // Bağlantı durumunu dinle
-    final connSubscription = device.connectionState.listen((state) {
-      if (state == BluetoothConnectionState.connected) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("${device.platformName} bağlandı! Veri çekiliyor...")),
-          );
-        }
-      } else if (state == BluetoothConnectionState.disconnected) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("${device.platformName} bağlantısı kesildi.")),
-          );
-        }
+      // Android için en stabil akış
+      final adapterState = await FlutterBluePlus.adapterState.first;
+      if (adapterState == BluetoothAdapterState.off) {
+        await FlutterBluePlus.turnOn();
+        await Future.delayed(const Duration(milliseconds: 1400));
       }
-    });
 
-    try {
-      await device.connect(
-        timeout: const Duration(seconds: 35),
-        autoConnect: false,
+      await FlutterBluePlus.startScan(
+        timeout: const Duration(seconds: 12),
+        androidScanMode: AndroidScanMode.balanced,
       );
 
-      List<BluetoothService> services = await device.discoverServices();
-
-      for (var service in services) {
-        print("Bulunan servis: ${service.uuid.toString()}");
-        for (var characteristic in service.characteristics) {
-          print("  → Characteristic: ${characteristic.uuid.toString()}");
+      _scanSubscription = FlutterBluePlus.scanResults.listen((results) {
+        final Map<String, ScanResult> unique = {};
+        for (final r in results) {
+          final key = r.device.remoteId.toString();
+          if (!unique.containsKey(key) || r.rssi > unique[key]!.rssi) {
+            unique[key] = r;
+          }
         }
-      }
+
+        if (mounted) {
+          setState(() {
+            _scanResults = unique.values.toList()
+              ..sort((a, b) => b.rssi.compareTo(a.rssi));
+          });
+        }
+      });
+
+      await Future.delayed(const Duration(seconds: 12));
+      await FlutterBluePlus.stopScan();
+    } catch (e) {
+      _showMessage("Tarama hatası: $e");
+    } finally {
+      if (mounted) setState(() => _isScanning = false);
+    }
+  }
+
+  Future<void> _connectToDevice(BluetoothDevice device) async {
+    final name = device.platformName.isNotEmpty ? device.platformName : "Bilinmeyen cihaz";
+
+    _showMessage("$name ile bağlanılıyor...");
+
+    try {
+      await device.connect(timeout: const Duration(seconds: 28), autoConnect: false);
+      final services = await device.discoverServices();
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Bağlantı başarılı – servisler keşfedildi")),
-        );
+        _showMessage("$name bağlandı! (${services.length} servis keşfedildi)");
       }
     } catch (e) {
-      print("Bağlantı hatası: $e");
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Bağlantı başarısız: $e")),
-        );
-      }
-    } finally {
-      connSubscription.cancel();
+      if (mounted) _showMessage("Bağlantı başarısız: $e");
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Bluetooth Cihazları Ara", style: GoogleFonts.quicksand()),
-        backgroundColor: const Color(0xFF1C3D32),
-      ),
+      appBar: AppBar(title: const Text("Bluetooth Cihazları")),
       body: Column(
         children: [
-          if (_isScanning)
-            const Center(child: CircularProgressIndicator()),
+          if (_isScanning) const LinearProgressIndicator(minHeight: 3),
           Expanded(
-            child: ListView.builder(
-              itemCount: _scanResults.length,
-              itemBuilder: (context, index) {
-                ScanResult result = _scanResults[index];
-                BluetoothDevice device = result.device;
-                return ListTile(
-                  title: Text(device.platformName.isEmpty ? "Bilinmeyen Cihaz" : device.platformName),
-                  subtitle: Text(device.remoteId.toString()),
-                  trailing: ElevatedButton(
-                    onPressed: () => _connectToDevice(device),
-                    child: const Text("Bağlan"),
+            child: _scanResults.isEmpty && !_isScanning
+                ? const Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.bluetooth_searching, size: 72, color: Colors.grey),
+                        SizedBox(height: 20),
+                        Text("Cihaz bulunamadı", style: TextStyle(fontSize: 18)),
+                        Text("Yenilemek için butona bas", style: TextStyle(fontSize: 14, color: Colors.grey)),
+                      ],
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.all(12),
+                    itemCount: _scanResults.length,
+                    itemBuilder: (context, i) {
+                      final result = _scanResults[i];
+                      final device = result.device;
+                      final name = device.platformName.isNotEmpty ? device.platformName : "Bilinmeyen cihaz";
+
+                      return Card(
+                        margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+                        child: ListTile(
+                          leading: const Icon(Icons.bluetooth, color: Color(0xFF1C3D32), size: 32),
+                          title: Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
+                          subtitle: Text(
+                            "${device.remoteId}\nRSSI: ${result.rssi} dBm",
+                            style: const TextStyle(fontSize: 13),
+                          ),
+                          trailing: TextButton(
+                            onPressed: () => _connectToDevice(device),
+                            child: const Text("Bağlan", style: TextStyle(fontWeight: FontWeight.w700)),
+                          ),
+                        ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _isScanning ? null : _startScan,
-        child: const Icon(Icons.refresh),
+        child: Icon(_isScanning ? Icons.stop : Icons.refresh),
       ),
     );
   }
