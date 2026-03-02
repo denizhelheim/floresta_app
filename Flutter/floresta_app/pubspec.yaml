@@ -1,0 +1,32 @@
+name: floresta_app
+description: Floresta sağlık takip uygulaması
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Google Fonts (quicksand fontu için)
+  google_fonts: ^6.2.1
+
+  # Bluetooth entegrasyonu (en güncel stabil sürüm)
+  flutter_blue_plus: ^1.34.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # Kod analizi ve lint için (opsiyonel ama önerilir)
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+
+  # Eğer asset (resim, ikon vs.) ekleyeceksen buraya ekleyebilirsin
+  # assets:
+  #   - assets/images/
