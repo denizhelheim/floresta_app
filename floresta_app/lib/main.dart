@@ -5,6 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
+import 'package:permission_handler/permission_handler.dart';
+import 'dart:io';
+
 void main() {
   runApp(const MyApp());
 }
@@ -703,56 +706,73 @@ class _BluetoothScanScreenState extends State<BluetoothScanScreen> {
   }
 
   Future<void> _startScan() async {
-    if (_isScanning) return;
+  if (_isScanning) return;
 
-    setState(() {
-      _isScanning = true;
-      _scanResults.clear();
-    });
+  setState(() {
+    _isScanning = true;
+    _scanResults.clear();
+  });
 
-    try {
-      if (!await FlutterBluePlus.isSupported) {
-        _showMessage("Bluetooth bu cihazda desteklenmiyor.");
+  try {
+    // İzinleri iste ve kontrol et
+    var bluetoothScanStatus = await Permission.bluetoothScan.request();
+    var bluetoothConnectStatus = await Permission.bluetoothConnect.request();
+
+    if (Platform.isAndroid && (await Permission.location.request()).isDenied) {
+      _showMessage("Konum izni gerekli (eski Android versiyonları için).");
+      setState(() => _isScanning = false);
+      return;
+    }
+
+    if (bluetoothScanStatus.isDenied || bluetoothConnectStatus.isDenied) {
+      _showMessage("Bluetooth izinleri reddedildi. Lütfen ayarlara gidip izin verin.");
+      setState(() => _isScanning = false);
+      return;
+    }
+
+    if (!await FlutterBluePlus.isSupported) {
+      _showMessage("Bluetooth bu cihazda desteklenmiyor.");
+      setState(() => _isScanning = false);
+      return;
+    }
+
+    // Adapter state'i dinle ve on olana kadar bekle
+    await for (var state in FlutterBluePlus.adapterState) {
+      if (state == BluetoothAdapterState.on) {
+        break;
+      } else if (state == BluetoothAdapterState.off) {
+        if (mounted) {
+          _showMessage("Bluetooth'u açın.");
+        }
+        setState(() => _isScanning = false);
         return;
       }
-
-      // Android için en stabil akış
-      final adapterState = await FlutterBluePlus.adapterState.first;
-      if (adapterState == BluetoothAdapterState.off) {
-        await FlutterBluePlus.turnOn();
-        await Future.delayed(const Duration(milliseconds: 1400));
-      }
-
-      await FlutterBluePlus.startScan(
-        timeout: const Duration(seconds: 12),
-        androidScanMode: AndroidScanMode.balanced,
-      );
-
-      _scanSubscription = FlutterBluePlus.scanResults.listen((results) {
-        final Map<String, ScanResult> unique = {};
-        for (final r in results) {
-          final key = r.device.remoteId.toString();
-          if (!unique.containsKey(key) || r.rssi > unique[key]!.rssi) {
-            unique[key] = r;
-          }
-        }
-
-        if (mounted) {
-          setState(() {
-            _scanResults = unique.values.toList()
-              ..sort((a, b) => b.rssi.compareTo(a.rssi));
-          });
-        }
-      });
-
-      await Future.delayed(const Duration(seconds: 12));
-      await FlutterBluePlus.stopScan();
-    } catch (e) {
-      _showMessage("Tarama hatası: $e");
-    } finally {
-      if (mounted) setState(() => _isScanning = false);
     }
+
+    // Tarama başlat
+    await FlutterBluePlus.startScan(
+      timeout: const Duration(seconds: 12),
+      androidScanMode: AndroidScanMode.balanced,
+      androidUsesFineLocation: false,  // Konum tabanlı değil
+    );
+
+    // Scan sonuçlarını dinle
+    final subscription = FlutterBluePlus.scanResults.listen((results) {
+      setState(() {
+        _scanResults = results;
+      });
+    });
+
+    // Tarama bitince durdur
+    await Future.delayed(const Duration(seconds: 12));
+    await FlutterBluePlus.stopScan();
+    subscription.cancel();
+  } catch (e) {
+    _showMessage("Tarama hatası: $e");
+  } finally {
+    if (mounted) setState(() => _isScanning = false);
   }
+}
 
   Future<void> _connectToDevice(BluetoothDevice device) async {
     final name = device.platformName.isNotEmpty ? device.platformName : "Bilinmeyen cihaz";

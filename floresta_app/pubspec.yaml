@@ -10,6 +10,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  permission_handler: ^11.3.0
 
   # Google Fonts (quicksand fontu için)
   google_fonts: ^6.2.1
