@@ -1,12 +1,11 @@
 import 'dart:async';
 import 'dart:math' as math;
+import 'dart:ui'; // Glassmorphism için BackdropFilter
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
-
 import 'package:permission_handler/permission_handler.dart';
-import 'dart:io';
 
 void main() {
   runApp(const MyApp());
@@ -27,32 +26,9 @@ class MyApp extends StatelessWidget {
           surface: const Color(0xFFF4FAF7),
           primary: const Color(0xFF1C3D32),
           secondary: const Color(0xFF4CAF50),
-          tertiary: const Color(0xFF26A69A),
         ),
         textTheme: GoogleFonts.quicksandTextTheme(
           ThemeData.light().textTheme,
-        ).copyWith(
-          headlineLarge: const TextStyle(
-            fontSize: 32,
-            fontWeight: FontWeight.w600,
-            height: 1.05,
-          ),
-          titleLarge: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-          ),
-          titleMedium: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w500,
-          ),
-          bodyLarge: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-          ),
-          bodyMedium: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w400,
-          ),
         ),
         scaffoldBackgroundColor: const Color(0xFFF4FAF7),
         appBarTheme: const AppBarTheme(
@@ -62,8 +38,9 @@ class MyApp extends StatelessWidget {
           centerTitle: true,
         ),
       ),
-      home: const HomeScreen(),
+      home: const SplashScreen(),
       routes: {
+        '/home': (context) => const HomeScreen(),
         '/steps': (context) => const StepsDetailScreen(),
         '/heart': (context) => const HeartDetailScreen(),
         '/sleep': (context) => const SleepDetailScreen(),
@@ -75,18 +52,121 @@ class MyApp extends StatelessWidget {
   }
 }
 
-// Ortak Hero geçiş animasyonu (Android'de daha stabil)
-Widget _heroFlightShuttleBuilder(
-  BuildContext flightContext,
-  Animation<double> animation,
-  HeroFlightDirection flightDirection,
-  BuildContext fromHeroContext,
-  BuildContext toHeroContext,
-) {
-  return Material(
-    color: Colors.transparent,
-    child: fromHeroContext.widget,
-  );
+// ==================== YENİ AÇILIŞ EKRANI ====================
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _fadeAnimation;
+  String greeting = "";
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 1400),
+      vsync: this,
+    )..forward();
+
+    _fadeAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOutCubic,
+    );
+
+    final hour = DateTime.now().hour;
+    if (hour >= 5 && hour < 12) {
+      greeting = "Günaydın 🌿";
+    } else if (hour >= 12 && hour < 15) {
+      greeting = "Tünaydın ☀️";
+    } else if (hour >= 15 && hour < 18) {
+      greeting = "İyi günler 🌞";
+    } else if (hour >= 18 && hour < 22) {
+      greeting = "İyi akşamlar 🌅";
+    } else {
+      greeting = "İyi geceler 🌙";
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _goToHome() {
+    Navigator.of(context).pushReplacementNamed('/home');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: GestureDetector(
+        onVerticalDragEnd: (details) {
+          if (details.primaryVelocity! < -300) {
+            _goToHome();
+          }
+        },
+        child: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0xFF1C3D32), Color(0xFF2E8B57)],
+            ),
+          ),
+          child: SafeArea(
+            child: Center(
+              child: FadeTransition(
+                opacity: _fadeAnimation,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      greeting,
+                      style: GoogleFonts.quicksand(
+                        fontSize: 48,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                        height: 1.1,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      "Floresta'ya hoş geldin",
+                      style: GoogleFonts.quicksand(
+                        fontSize: 20,
+                        color: Colors.white.withOpacity(0.85),
+                      ),
+                    ),
+                    const SizedBox(height: 120),
+                    Column(
+                      children: [
+                        const Icon(Icons.keyboard_arrow_up_rounded, size: 48, color: Colors.white),
+                        Text(
+                          "Yukarı kaydır",
+                          style: GoogleFonts.quicksand(
+                            fontSize: 16,
+                            color: Colors.white.withOpacity(0.8),
+                            letterSpacing: 1.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class HomeScreen extends StatefulWidget {
@@ -105,16 +185,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 950),
+      duration: const Duration(milliseconds: 1100),
       vsync: this,
     )..forward();
 
-    _fadeAnimation = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOutQuart,
-    );
-
-    _scaleAnimation = Tween<double>(begin: 0.96, end: 1.0).animate(
+    _fadeAnimation = CurvedAnimation(parent: _controller, curve: Curves.easeOutQuart);
+    _scaleAnimation = Tween<double>(begin: 0.95, end: 1.0).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeOutQuart),
     );
   }
@@ -138,84 +214,66 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 opacity: _fadeAnimation,
                 child: Text(
                   "Merhaba,",
-                  style: Theme.of(context).textTheme.headlineLarge,
+                  style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontSize: 34),
                 ),
               ),
               FadeTransition(
                 opacity: _fadeAnimation,
                 child: Text(
                   "bugün nasılsın? 🌿",
-                  style: Theme.of(context).textTheme.headlineLarge,
+                  style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontSize: 34),
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
               FadeTransition(
                 opacity: _fadeAnimation,
                 child: Text(
                   "Sağlık yolculuğun burada başlıyor",
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: Colors.grey[600],
-                  ),
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey[600]),
+                ),
+              ),
+
+              const SizedBox(height: 32),
+
+              Row(
+                children: [
+                  Expanded(child: _buildMiniMotivationCard()),
+                  const SizedBox(width: 12),
+                  Expanded(child: _buildWaterTrackerCard()),
+                ],
+              ),
+
+              const SizedBox(height: 44),
+
+              SizedBox(
+                height: 325,
+                child: PageView(
+                  physics: const BouncingScrollPhysics(),
+                  controller: PageController(viewportFraction: 0.88),
+                  children: [
+                    ScaleTransition(scale: _scaleAnimation, child: _buildStepsCard(context)),
+                    ScaleTransition(scale: _scaleAnimation, child: _buildHeartCard(context)),
+                    ScaleTransition(scale: _scaleAnimation, child: _buildSleepCard(context)),
+                    ScaleTransition(scale: _scaleAnimation, child: _buildStressCard(context)),
+                  ],
                 ),
               ),
 
               const SizedBox(height: 48),
 
-              SizedBox(
-                height: 310,
-                child: PageView(
-                  physics: const BouncingScrollPhysics(),
-                  controller: PageController(viewportFraction: 0.88, initialPage: 0),
-                  children: [
-                    ScaleTransition(
-                      scale: _scaleAnimation,
-                      child: FadeTransition(
-                        opacity: _fadeAnimation,
-                        child: _buildStepsCard(context),
-                      ),
-                    ),
-                    ScaleTransition(
-                      scale: _scaleAnimation,
-                      child: FadeTransition(
-                        opacity: _fadeAnimation,
-                        child: _buildHeartCard(context),
-                      ),
-                    ),
-                    ScaleTransition(
-                      scale: _scaleAnimation,
-                      child: FadeTransition(
-                        opacity: _fadeAnimation,
-                        child: _buildSleepCard(context),
-                      ),
-                    ),
-                    ScaleTransition(
-                      scale: _scaleAnimation,
-                      child: FadeTransition(
-                        opacity: _fadeAnimation,
-                        child: _buildStressCard(context),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 52),
-
-              // AI Raporu Butonu
-              _buildActionButton(
+              _buildPrimaryGradientButton(
                 context,
-                icon: Icons.auto_awesome,
                 label: "Yapay Zeka Raporu Al",
+                icon: Icons.auto_awesome,
                 onPressed: () => Navigator.pushNamed(context, '/ai_report'),
               ),
 
               const SizedBox(height: 16),
 
-              // Bluetooth Butonu
-              _buildActionButton(
+              _buildSecondaryOutlineButton(
                 context,
-                icon: Icons.bluetooth,
                 label: "Bluetooth Cihazı Tara",
+                icon: Icons.bluetooth,
                 onPressed: () => Navigator.pushNamed(context, '/bluetooth'),
               ),
 
@@ -227,45 +285,267 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
-  Widget _buildActionButton(
+  Widget _glassCard({required Widget child, double? height}) {
+    return Container(
+      height: height,
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.78),
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: Colors.white.withOpacity(0.35), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.07),
+            blurRadius: 35,
+            offset: const Offset(0, 18),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(32),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+          child: child,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStepsCard(BuildContext context) {
+    const int steps = 12456;
+    const int goal = 15000;
+    final progress = steps / goal;
+
+    return GestureDetector(
+      onTap: () => Navigator.pushNamed(context, '/steps'),
+      child: _glassCard(
+        height: 310,
+        child: Padding(
+          padding: const EdgeInsets.all(26),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE8F5E9),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Icon(Icons.directions_walk_rounded, size: 42, color: Color(0xFF4CAF50)),
+                  ),
+                  const SizedBox(width: 16),
+                  const Text(
+                    "Adım Sayısı",
+                    style: TextStyle(fontSize: 19, fontWeight: FontWeight.w600, color: Color(0xFF2C3E50)),
+                  ),
+                ],
+              ),
+              const Spacer(),
+              Center(
+                child: SizedBox(
+                  width: 210,
+                  height: 210,
+                  child: Stack(
+                    children: [
+                      Center(
+                        child: CircularProgressIndicator(
+                          value: progress,
+                          strokeWidth: 11,
+                          backgroundColor: Colors.grey.withOpacity(0.15),
+                          valueColor: const AlwaysStoppedAnimation(Color(0xFF4CAF50)),
+                        ),
+                      ),
+                      Positioned.fill(
+                        child: Center(
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 6),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    steps.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.'),
+                                    style: const TextStyle(fontSize: 31, fontWeight: FontWeight.w700, height: 1),
+                                  ),
+                                ),
+                                Text("hedef $goal", style: const TextStyle(fontSize: 14, color: Colors.grey)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const Spacer(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeartCard(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Navigator.pushNamed(context, '/heart'),
+      child: _glassCard(
+        height: 310,
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFEBEE),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Icon(Icons.monitor_heart_rounded, size: 42, color: Color(0xFFEF5350)),
+                  ),
+                  const SizedBox(width: 16),
+                  const Text(
+                    "Nabız",
+                    style: TextStyle(fontSize: 19, fontWeight: FontWeight.w600, color: Color(0xFF2C3E50)),
+                  ),
+                ],
+              ),
+              const Spacer(),
+              const Text("78 bpm", style: TextStyle(fontSize: 42, fontWeight: FontWeight.w700, color: Color(0xFF2C3E50))),
+              const Text("Normal aralıkta", style: TextStyle(color: Colors.grey)),
+              const SizedBox(height: 16),
+              SizedBox(
+                height: 92,
+                child: CustomPaint(
+                  size: const Size(double.infinity, 92),
+                  painter: HeartRateGraphPainter(),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSleepCard(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Navigator.pushNamed(context, '/sleep'),
+      child: _glassCard(
+        height: 310,
+        child: Padding(
+          padding: const EdgeInsets.all(26),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE3F2FD),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Icon(Icons.nightlight_round, size: 42, color: Color(0xFF64B5F6)),
+                  ),
+                  const SizedBox(width: 16),
+                  const Text(
+                    "Uyku",
+                    style: TextStyle(fontSize: 19, fontWeight: FontWeight.w600, color: Color(0xFF2C3E50)),
+                  ),
+                ],
+              ),
+              const Spacer(),
+              const Text("7s 32dk", style: TextStyle(fontSize: 38, fontWeight: FontWeight.w700, color: Color(0xFF2C3E50))),
+              const Text("Kaliteli • %81", style: TextStyle(color: Color(0xFF4CAF50), fontWeight: FontWeight.w600)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStressCard(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Navigator.pushNamed(context, '/stress'),
+      child: _glassCard(
+        height: 310,
+        child: Padding(
+          padding: const EdgeInsets.all(26),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE0F2F1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Icon(Icons.spa_rounded, size: 42, color: Color(0xFF26A69A)),
+                  ),
+                  const SizedBox(width: 16),
+                  const Text(
+                    "Stres Seviyesi",
+                    style: TextStyle(fontSize: 19, fontWeight: FontWeight.w600, color: Color(0xFF2C3E50)),
+                  ),
+                ],
+              ),
+              const Spacer(),
+              const Text("%28", style: TextStyle(fontSize: 42, fontWeight: FontWeight.w700, color: Color(0xFF2C3E50))),
+              const Text("Düşük • Rahat", style: TextStyle(color: Colors.grey)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPrimaryGradientButton(
     BuildContext context, {
-    required IconData icon,
     required String label,
+    required IconData icon,
     required VoidCallback onPressed,
   }) {
     return Container(
       width: double.infinity,
-      height: 72,
+      height: 74,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(32),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF1C3D32), Color(0xFF2E8B57)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1C3D32).withOpacity(0.28),
-            blurRadius: 22,
-            offset: const Offset(0, 10),
+            color: const Color(0xFF1C3D32).withOpacity(0.4),
+            blurRadius: 25,
+            offset: const Offset(0, 12),
           ),
         ],
       ),
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF1C3D32),
-          foregroundColor: Colors.white,
-          elevation: 0,
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
-          padding: const EdgeInsets.symmetric(horizontal: 24),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 28),
+            Icon(icon, size: 28, color: Colors.white),
             const SizedBox(width: 14),
             Text(
               label,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: Colors.white,
-                letterSpacing: 0.6,
-              ),
+              style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w700, color: Colors.white),
             ),
           ],
         ),
@@ -273,191 +553,81 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
-  // Ortak metrik kartı (kod tekrarı sıfırlandı)
-  Widget _buildMetricCard({
-    required BuildContext context,
-    required String tag,
-    required String title,
-    required String value,
-    required String subtitle,
+  Widget _buildSecondaryOutlineButton(
+    BuildContext context, {
+    required String label,
     required IconData icon,
-    required Color iconColor,
-    required Color bgColor,
-    required VoidCallback onTap,
-    Widget? extraChild,
+    required VoidCallback onPressed,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Hero(
-        tag: tag,
-        flightShuttleBuilder: _heroFlightShuttleBuilder,
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.88),
-            borderRadius: BorderRadius.circular(32),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.055),
-                blurRadius: 28,
-                offset: const Offset(0, 14),
-              ),
-            ],
-          ),
-          child: extraChild ??
-              Row(
+    return OutlinedButton(
+      onPressed: onPressed,
+      style: OutlinedButton.styleFrom(
+        minimumSize: const Size(double.infinity, 74),
+        side: const BorderSide(color: Color(0xFF1C3D32), width: 2.2),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+        foregroundColor: const Color(0xFF1C3D32),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 28),
+          const SizedBox(width: 14),
+          Text(label, style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w700)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMiniMotivationCard() {
+    return _glassCard(
+      height: 100,
+      child: const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("Bugün harikasın! 💪", style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+            Text("Küçük adımlar, büyük fark yaratır.", style: TextStyle(fontSize: 13, color: Colors.grey)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWaterTrackerCard() {
+    const double waterProgress = 0.65;
+    return _glassCard(
+      height: 100,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+        child: Row(
+          children: [
+            const Icon(Icons.water_drop_rounded, size: 38, color: Color(0xFF64B5F6)),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(18),
-                    decoration: BoxDecoration(
-                      color: bgColor,
-                      borderRadius: BorderRadius.circular(26),
-                    ),
-                    child: Icon(
-                      icon,
-                      size: 54,
-                      color: iconColor,
-                    ),
-                  ),
-                  const SizedBox(width: 18),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          title,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: Colors.grey[700],
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          value,
-                          style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                            color: const Color(0xFF2C3E50),
-                            height: 1.0,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          subtitle,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Colors.grey[500],
-                          ),
-                        ),
-                      ],
-                    ),
+                  const Text("Su Tüketimi", style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 4),
+                  LinearProgressIndicator(
+                    value: waterProgress,
+                    backgroundColor: Colors.grey.withOpacity(0.2),
+                    valueColor: const AlwaysStoppedAnimation(Color(0xFF64B5F6)),
+                    minHeight: 7,
+                    borderRadius: BorderRadius.circular(99),
                   ),
                 ],
               ),
+            ),
+            const SizedBox(width: 12),
+            Text("${(waterProgress * 100).round()}%", style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+          ],
         ),
       ),
     );
   }
-
-  Widget _buildStepsCard(BuildContext context) => _buildMetricCard(
-        context: context,
-        tag: 'steps_card',
-        title: "Adım Sayısı",
-        value: "12.456",
-        subtitle: "hedef 15.000",
-        icon: Icons.directions_walk_rounded,
-        iconColor: const Color(0xFF4CAF50),
-        bgColor: const Color(0xFFE8F5E9),
-        onTap: () => Navigator.pushNamed(context, '/steps'),
-      );
-
-  Widget _buildHeartCard(BuildContext context) => _buildMetricCard(
-        context: context,
-        tag: 'heart_card',
-        title: "Nabız",
-        value: "78 bpm",
-        subtitle: "Normal aralıkta",
-        icon: Icons.monitor_heart_rounded,
-        iconColor: const Color(0xFFEF5350),
-        bgColor: const Color(0xFFFFEBEE),
-        onTap: () => Navigator.pushNamed(context, '/heart'),
-        extraChild: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFEBEE),
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: const Icon(
-                    Icons.monitor_heart_rounded,
-                    size: 48,
-                    color: Color(0xFFEF5350),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Nabız",
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Colors.grey[700],
-                      ),
-                    ),
-                    Text(
-                      "78 bpm",
-                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        color: const Color(0xFF2C3E50),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            SizedBox(
-              height: 118,
-              child: CustomPaint(
-                size: const Size(double.infinity, 118),
-                painter: HeartRateGraphPainter(),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text("08:00", style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[500])),
-                Text("Şimdi", style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey[500])),
-              ],
-            ),
-          ],
-        ),
-      );
-
-  Widget _buildSleepCard(BuildContext context) => _buildMetricCard(
-        context: context,
-        tag: 'sleep_card',
-        title: "Uyku",
-        value: "7s 32dk",
-        subtitle: "Kaliteli • %81",
-        icon: Icons.nightlight_round,
-        iconColor: const Color(0xFF64B5F6),
-        bgColor: const Color(0xFFE3F2FD),
-        onTap: () => Navigator.pushNamed(context, '/sleep'),
-      );
-
-  Widget _buildStressCard(BuildContext context) => _buildMetricCard(
-        context: context,
-        tag: 'stress_card',
-        title: "Stres Seviyesi",
-        value: "%28",
-        subtitle: "Düşük • Rahat",
-        icon: Icons.spa_rounded,
-        iconColor: const Color(0xFF26A69A),
-        bgColor: const Color(0xFFE0F2F1),
-        onTap: () => Navigator.pushNamed(context, '/stress'),
-      );
 }
 
 class HeartRateGraphPainter extends CustomPainter {
@@ -512,7 +682,7 @@ class HeartRateGraphPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-// Detay ekranları (Hero + temiz tema kullanımı)
+// ==================== DETAY EKRANLARI ====================
 class StepsDetailScreen extends StatelessWidget {
   const StepsDetailScreen({super.key});
 
@@ -672,7 +842,6 @@ class AIReportScreen extends StatelessWidget {
   }
 }
 
-// Android'de en stabil Bluetooth tarama (tüm iyileştirmeler burada)
 class BluetoothScanScreen extends StatefulWidget {
   const BluetoothScanScreen({super.key});
 
@@ -706,86 +875,79 @@ class _BluetoothScanScreenState extends State<BluetoothScanScreen> {
   }
 
   Future<void> _startScan() async {
-  if (_isScanning) return;
+    if (_isScanning) return;
 
-  setState(() {
-    _isScanning = true;
-    _scanResults.clear();
-  });
+    setState(() {
+      _isScanning = true;
+      _scanResults.clear();
+    });
 
-  try {
-    // İzinleri iste ve kontrol et
-    var bluetoothScanStatus = await Permission.bluetoothScan.request();
-    var bluetoothConnectStatus = await Permission.bluetoothConnect.request();
+    try {
+      var bluetoothScanStatus = await Permission.bluetoothScan.request();
+      var bluetoothConnectStatus = await Permission.bluetoothConnect.request();
+      var locationStatus = await Permission.locationWhenInUse.request();
 
-    if (Platform.isAndroid && (await Permission.location.request()).isDenied) {
-      _showMessage("Konum izni gerekli (eski Android versiyonları için).");
-      setState(() => _isScanning = false);
-      return;
-    }
-
-    if (bluetoothScanStatus.isDenied || bluetoothConnectStatus.isDenied) {
-      _showMessage("Bluetooth izinleri reddedildi. Lütfen ayarlara gidip izin verin.");
-      setState(() => _isScanning = false);
-      return;
-    }
-
-    if (!await FlutterBluePlus.isSupported) {
-      _showMessage("Bluetooth bu cihazda desteklenmiyor.");
-      setState(() => _isScanning = false);
-      return;
-    }
-
-    // Adapter state'i dinle ve on olana kadar bekle
-    await for (var state in FlutterBluePlus.adapterState) {
-      if (state == BluetoothAdapterState.on) {
-        break;
-      } else if (state == BluetoothAdapterState.off) {
-        if (mounted) {
-          _showMessage("Bluetooth'u açın.");
-        }
+      if (bluetoothScanStatus.isDenied || bluetoothConnectStatus.isDenied || locationStatus.isDenied) {
+        _showMessage("Gerekli izinler reddedildi. Ayarlara gidip izin verin.");
         setState(() => _isScanning = false);
         return;
       }
-    }
 
-    // Tarama başlat
-    await FlutterBluePlus.startScan(
-      timeout: const Duration(seconds: 12),
-      androidScanMode: AndroidScanMode.balanced,
-      androidUsesFineLocation: false,  // Konum tabanlı değil
-    );
+      if (locationStatus.isPermanentlyDenied) {
+        await openAppSettings();
+        setState(() => _isScanning = false);
+        return;
+      }
 
-    // Scan sonuçlarını dinle
-    final subscription = FlutterBluePlus.scanResults.listen((results) {
-      setState(() {
-        _scanResults = results;
+      if (!await FlutterBluePlus.isSupported) {
+        _showMessage("Bluetooth bu cihazda desteklenmiyor.");
+        return;
+      }
+
+      final adapterState = await FlutterBluePlus.adapterState.first;
+      if (adapterState == BluetoothAdapterState.off) {
+        await FlutterBluePlus.turnOn();
+        await Future.delayed(const Duration(milliseconds: 1400));
+      }
+
+      await FlutterBluePlus.startScan(
+        timeout: const Duration(seconds: 12),
+        androidScanMode: AndroidScanMode.balanced,
+        androidUsesFineLocation: false,
+      );
+
+      _scanSubscription = FlutterBluePlus.scanResults.listen((results) {
+        final Map<String, ScanResult> unique = {};
+        for (final r in results) {
+          final key = r.device.remoteId.toString();
+          if (!unique.containsKey(key) || r.rssi > unique[key]!.rssi) {
+            unique[key] = r;
+          }
+        }
+        if (mounted) {
+          setState(() {
+            _scanResults = unique.values.toList()..sort((a, b) => b.rssi.compareTo(a.rssi));
+          });
+        }
       });
-    });
 
-    // Tarama bitince durdur
-    await Future.delayed(const Duration(seconds: 12));
-    await FlutterBluePlus.stopScan();
-    subscription.cancel();
-  } catch (e) {
-    _showMessage("Tarama hatası: $e");
-  } finally {
-    if (mounted) setState(() => _isScanning = false);
+      await Future.delayed(const Duration(seconds: 12));
+      await FlutterBluePlus.stopScan();
+    } catch (e) {
+      _showMessage("Tarama hatası: $e");
+    } finally {
+      if (mounted) setState(() => _isScanning = false);
+    }
   }
-}
 
   Future<void> _connectToDevice(BluetoothDevice device) async {
     final name = device.platformName.isNotEmpty ? device.platformName : "Bilinmeyen cihaz";
-
     _showMessage("$name ile bağlanılıyor...");
 
     try {
       await device.connect(timeout: const Duration(seconds: 28), autoConnect: false);
       final services = await device.discoverServices();
-
-      if (mounted) {
-        _showMessage("$name bağlandı! (${services.length} servis keşfedildi)");
-      }
+      if (mounted) _showMessage("$name bağlandı! (${services.length} servis)");
     } catch (e) {
       if (mounted) _showMessage("Bağlantı başarısız: $e");
     }
