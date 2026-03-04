@@ -69,13 +69,13 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 900),
+      duration: const Duration(milliseconds: 500),
       vsync: this,
     )..forward();
 
     _fadeAnimation = CurvedAnimation(
       parent: _controller,
-      curve: Curves.easeOutCubic,
+      curve: Curves.easeOut,
     );
 
     _setGreeting();
@@ -188,13 +188,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 700),
+      duration: const Duration(milliseconds: 400),
       vsync: this,
     )..forward();
 
-    _fadeAnimation = CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic);
+    _fadeAnimation = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
     _scaleAnimation = Tween<double>(begin: 0.92, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
+      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
     );
   }
 
@@ -223,7 +223,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 opacity: _fadeAnimation,
                 child: Text(
                   "Merhaba,",
-                  style: TextStyle(fontSize: screenSize.width * 0.08, fontWeight: FontWeight.w700, color: const Color(0xFF2C3E50)),
+                  style: TextStyle(
+                    fontSize: screenSize.width * 0.07,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF2C3E50),
+                    height: 1.2,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -232,8 +237,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 opacity: _fadeAnimation,
                 child: Text(
                   "bugün nasılsın? 🌿",
-                  style: TextStyle(fontSize: screenSize.width * 0.08, fontWeight: FontWeight.w700, color: const Color(0xFF2C3E50)),
-                  maxLines: 1,
+                  style: TextStyle(
+                    fontSize: screenSize.width * 0.07,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF2C3E50),
+                    height: 1.2,
+                  ),
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -243,6 +253,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 child: Text(
                   "Sağlık yolculuğun burada başlıyor",
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey[600]),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
 
@@ -337,64 +349,84 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       child: _glassCard(
         height: height,
         child: Padding(
-          padding: const EdgeInsets.all(26),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+          padding: const EdgeInsets.all(20),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final screenWidth = MediaQuery.of(context).size.width;
+              final maxRingSize = math.min(constraints.maxHeight * 0.45, 180.0);
+              final ringSize = math.min(maxRingSize, screenWidth * 0.45);
+              
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE8F5E9),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Icon(Icons.directions_walk_rounded, size: 42, color: Color(0xFF4CAF50)),
-                  ),
-                  const SizedBox(width: 16),
-                  const Flexible(
-                    child: Text(
-                      "Adım Sayısı",
-                      style: TextStyle(fontSize: 19, fontWeight: FontWeight.w600, color: Color(0xFF2C3E50)),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-              const Spacer(),
-              Center(
-                child: SizedBox(
-                  width: 210,
-                  height: 210,
-                  child: Stack(
-                    alignment: Alignment.center,
+                  Row(
                     children: [
-                      CircularProgressIndicator(
-                        value: progress,
-                        strokeWidth: 11,
-                        backgroundColor: Colors.grey.withValues(alpha: 0.15),
-                        valueColor: const AlwaysStoppedAnimation(Color(0xFF4CAF50)),
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE8F5E9),
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        child: const Icon(Icons.directions_walk_rounded, size: 38, color: Color(0xFF4CAF50)),
                       ),
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            steps.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.'),
-                            style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w800, height: 1.2),
-                            maxLines: 1,
-                          ),
-                          const SizedBox(height: 6),
-                          const Text("hedef $goal", style: TextStyle(fontSize: 13, color: Colors.grey, fontWeight: FontWeight.w500)),
-                        ],
+                      const SizedBox(width: 12),
+                      const Flexible(
+                        child: Text(
+                          "Adım Sayısı",
+                          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: Color(0xFF2C3E50), height: 1.2),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     ],
                   ),
-                ),
-              ),
-              const Spacer(),
-            ],
+                  const SizedBox(height: 8),
+                  Center(
+                    child: SizedBox(
+                      width: ringSize,
+                      height: ringSize,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          CircularProgressIndicator(
+                            value: progress,
+                            strokeWidth: math.max(5.5, ringSize * 0.05),
+                            backgroundColor: Colors.grey.withValues(alpha: 0.15),
+                            valueColor: const AlwaysStoppedAnimation(Color(0xFF4CAF50)),
+                          ),
+                          Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                steps.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.'),
+                                style: TextStyle(
+                                  fontSize: math.max(24, ringSize * 0.16),
+                                  fontWeight: FontWeight.w800,
+                                  height: 1.1,
+                                ),
+                                maxLines: 1,
+                              ),
+                              SizedBox(height: math.max(4, ringSize * 0.04)),
+                              Text(
+                                "hedef $goal",
+                                style: TextStyle(
+                                  fontSize: math.max(11, ringSize * 0.07),
+                                  color: Colors.grey,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+              );
+            },
           ),
         ),
       ),
@@ -407,25 +439,25 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       child: _glassCard(
         height: height,
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
                       color: const Color(0xFFFFEBEE),
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(18),
                     ),
-                    child: const Icon(Icons.monitor_heart_rounded, size: 42, color: Color(0xFFEF5350)),
+                    child: const Icon(Icons.monitor_heart_rounded, size: 38, color: Color(0xFFEF5350)),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 12),
                   const Flexible(
                     child: Text(
                       "Nabız",
-                      style: TextStyle(fontSize: 19, fontWeight: FontWeight.w600, color: Color(0xFF2C3E50)),
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Color(0xFF2C3E50), height: 1.2),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -433,14 +465,14 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 ],
               ),
               const Spacer(),
-              const Text("78 bpm", style: TextStyle(fontSize: 42, fontWeight: FontWeight.w700, color: Color(0xFF2C3E50))),
-              const Text("Normal aralıkta", style: TextStyle(color: Colors.grey)),
-              const SizedBox(height: 16),
+              const Text("78 bpm", style: TextStyle(fontSize: 36, fontWeight: FontWeight.w700, color: Color(0xFF2C3E50))),
+              const Text("Normal aralıkta", style: TextStyle(fontSize: 14, color: Colors.grey, height: 1.2)),
+              const SizedBox(height: 14),
               SizedBox(
-                height: 92,
+                height: 80,
                 child: RepaintBoundary(
                   child: CustomPaint(
-                    size: const Size(double.infinity, 92),
+                    size: const Size(double.infinity, 80),
                     painter: HeartRateGraphPainter(),
                   ),
                 ),
@@ -458,25 +490,25 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       child: _glassCard(
         height: height,
         child: Padding(
-          padding: const EdgeInsets.all(26),
+          padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
                       color: const Color(0xFFE3F2FD),
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(18),
                     ),
-                    child: const Icon(Icons.nightlight_round, size: 42, color: Color(0xFF64B5F6)),
+                    child: const Icon(Icons.nightlight_round, size: 38, color: Color(0xFF64B5F6)),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 12),
                   const Flexible(
                     child: Text(
                       "Uyku",
-                      style: TextStyle(fontSize: 19, fontWeight: FontWeight.w600, color: Color(0xFF2C3E50)),
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Color(0xFF2C3E50), height: 1.2),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -484,8 +516,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 ],
               ),
               const Spacer(),
-              const Text("7s 32dk", style: TextStyle(fontSize: 38, fontWeight: FontWeight.w700, color: Color(0xFF2C3E50))),
-              const Text("Kaliteli • %81", style: TextStyle(color: Color(0xFF4CAF50), fontWeight: FontWeight.w600)),
+              const Text("7s 32dk", style: TextStyle(fontSize: 36, fontWeight: FontWeight.w700, color: Color(0xFF2C3E50))),
+              const Text("Kaliteli • %81", style: TextStyle(fontSize: 14, color: Color(0xFF4CAF50), fontWeight: FontWeight.w600, height: 1.2)),
             ],
           ),
         ),
@@ -499,25 +531,25 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       child: _glassCard(
         height: height,
         child: Padding(
-          padding: const EdgeInsets.all(26),
+          padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
                       color: const Color(0xFFE0F2F1),
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(18),
                     ),
-                    child: const Icon(Icons.spa_rounded, size: 42, color: Color(0xFF26A69A)),
+                    child: const Icon(Icons.spa_rounded, size: 38, color: Color(0xFF26A69A)),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 12),
                   const Flexible(
                     child: Text(
-                      "Stres Seviyesi",
-                      style: TextStyle(fontSize: 19, fontWeight: FontWeight.w600, color: Color(0xFF2C3E50)),
+                      "Stres",
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Color(0xFF2C3E50), height: 1.2),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -525,8 +557,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 ],
               ),
               const Spacer(),
-              const Text("%28", style: TextStyle(fontSize: 42, fontWeight: FontWeight.w700, color: Color(0xFF2C3E50))),
-              const Text("Düşük • Rahat", style: TextStyle(color: Colors.grey)),
+              const Text("%28", style: TextStyle(fontSize: 36, fontWeight: FontWeight.w700, color: Color(0xFF2C3E50))),
+              const Text("Düşük • Rahat", style: TextStyle(fontSize: 14, color: Colors.grey, height: 1.2)),
             ],
           ),
         ),
@@ -621,15 +653,40 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   Widget _buildMiniMotivationCard(double height) {
     return _glassCard(
       height: height,
-      child: const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text("Bugün harikasın! 💪", style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
-            Text("Küçük adımlar,\nbüyük fark yaratır.", style: TextStyle(fontSize: 13, color: Colors.grey), maxLines: 2, overflow: TextOverflow.ellipsis),
-          ],
-        ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isNarrow = constraints.maxWidth < 140;
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  "Bugün harikasın! 💪",
+                  style: TextStyle(
+                    fontSize: isNarrow ? 13 : 15,
+                    fontWeight: FontWeight.w700,
+                    height: 1.2,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  "Küçük adımlar,\nbüyük fark yaratır.",
+                  style: TextStyle(
+                    fontSize: isNarrow ? 11 : 13,
+                    color: Colors.grey,
+                    height: 1.3,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -638,33 +695,82 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     const double waterProgress = 0.65;
     return _glassCard(
       height: height,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-        child: Row(
-          children: [
-            const Icon(Icons.water_drop_rounded, size: 38, color: Color(0xFF64B5F6)),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text("Su Tüketimi", style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 4),
-                  LinearProgressIndicator(
-                    value: waterProgress,
-                    backgroundColor: Colors.grey.withValues(alpha: 0.2),
-                    valueColor: const AlwaysStoppedAnimation(Color(0xFF64B5F6)),
-                    minHeight: 7,
-                    borderRadius: BorderRadius.circular(99),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isNarrow = constraints.maxWidth < 180;
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            child: isNarrow
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.water_drop_rounded, size: 32, color: Color(0xFF64B5F6)),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              "Su Tüketimi",
+                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      LinearProgressIndicator(
+                        value: waterProgress,
+                        backgroundColor: Colors.grey.withValues(alpha: 0.2),
+                        valueColor: const AlwaysStoppedAnimation(Color(0xFF64B5F6)),
+                        minHeight: 6,
+                        borderRadius: BorderRadius.circular(99),
+                      ),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: Text(
+                          "${(waterProgress * 100).round()}%",
+                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ],
+                  )
+                : Row(
+                    children: [
+                      const Icon(Icons.water_drop_rounded, size: 38, color: Color(0xFF64B5F6)),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text(
+                              "Su Tüketimi",
+                              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4),
+                            LinearProgressIndicator(
+                              value: waterProgress,
+                              backgroundColor: Colors.grey.withValues(alpha: 0.2),
+                              valueColor: const AlwaysStoppedAnimation(Color(0xFF64B5F6)),
+                              minHeight: 7,
+                              borderRadius: BorderRadius.circular(99),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        "${(waterProgress * 100).round()}%",
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 12),
-            Text("${(waterProgress * 100).round()}%", style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -1028,6 +1134,8 @@ class _BluetoothScanScreenState extends State<BluetoothScanScreen> {
 
       await FlutterBluePlus.startScan(
         timeout: const Duration(seconds: 10),
+        androidScanMode: AndroidScanMode.lowLatency,
+        androidUsesFineLocation: false,
       );
 
       _scanSubscription = FlutterBluePlus.scanResults.listen((results) {
@@ -1059,7 +1167,7 @@ class _BluetoothScanScreenState extends State<BluetoothScanScreen> {
     _showMessage("$name ile bağlanılıyor...");
 
     try {
-      await device.connect(timeout: const Duration(seconds: 15));
+      await device.connect(timeout: const Duration(seconds: 15), autoConnect: false);
       final services = await device.discoverServices();
       if (mounted) _showMessage("$name bağlandı! (${services.length} servis)");
     } catch (e) {
