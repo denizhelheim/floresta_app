@@ -69,7 +69,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 1400),
+      duration: const Duration(milliseconds: 900),
       vsync: this,
     )..forward();
 
@@ -78,18 +78,18 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       curve: Curves.easeOutCubic,
     );
 
+    _setGreeting();
+  }
+
+  void _setGreeting() {
     final hour = DateTime.now().hour;
-    if (hour >= 5 && hour < 12) {
-      greeting = "Günaydın 🌿";
-    } else if (hour >= 12 && hour < 15) {
-      greeting = "Tünaydın ☀️";
-    } else if (hour >= 15 && hour < 18) {
-      greeting = "İyi günler 🌞";
-    } else if (hour >= 18 && hour < 22) {
-      greeting = "İyi akşamlar 🌅";
-    } else {
-      greeting = "İyi geceler 🌙";
-    }
+    greeting = switch (hour) {
+      >= 5 && < 12 => "Günaydın 🌿",
+      >= 12 && < 15 => "Tünaydın ☀️",
+      >= 15 && < 18 => "İyi günler 🌞",
+      >= 18 && < 22 => "İyi akşamlar 🌅",
+      _ => "İyi geceler 🌙",
+    };
   }
 
   @override
@@ -104,6 +104,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
     return Scaffold(
       body: GestureDetector(
         onVerticalDragEnd: (details) {
@@ -128,31 +129,33 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   children: [
                     Text(
                       greeting,
-                      style: GoogleFonts.quicksand(
-                        fontSize: 48,
+                      style: TextStyle(
+                        fontSize: screenHeight * 0.06,
                         fontWeight: FontWeight.w700,
                         color: Colors.white,
                         height: 1.1,
                       ),
                       textAlign: TextAlign.center,
+                      maxLines: 1,
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: screenHeight * 0.02),
                     Text(
                       "Floresta'ya hoş geldin",
-                      style: GoogleFonts.quicksand(
-                        fontSize: 20,
-                        color: Colors.white.withOpacity(0.85),
+                      style: TextStyle(
+                        fontSize: screenHeight * 0.025,
+                        color: Colors.white.withValues(alpha: 0.85),
                       ),
+                      maxLines: 1,
                     ),
-                    const SizedBox(height: 120),
+                    SizedBox(height: screenHeight * 0.15),
                     Column(
                       children: [
                         const Icon(Icons.keyboard_arrow_up_rounded, size: 48, color: Colors.white),
                         Text(
                           "Yukarı kaydır",
-                          style: GoogleFonts.quicksand(
+                          style: TextStyle(
                             fontSize: 16,
-                            color: Colors.white.withOpacity(0.8),
+                            color: Colors.white.withValues(alpha: 0.8),
                             letterSpacing: 1.5,
                           ),
                         ),
@@ -185,13 +188,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 1100),
+      duration: const Duration(milliseconds: 700),
       vsync: this,
     )..forward();
 
-    _fadeAnimation = CurvedAnimation(parent: _controller, curve: Curves.easeOutQuart);
-    _scaleAnimation = Tween<double>(begin: 0.95, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutQuart),
+    _fadeAnimation = CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic);
+    _scaleAnimation = Tween<double>(begin: 0.92, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
     );
   }
 
@@ -203,10 +206,16 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   @override
   Widget build(BuildContext context) {
+    final screenSize = MediaQuery.of(context).size;
+    final cardHeight = screenSize.height * 0.38; // Responsive yükseklik
+    final miniCardHeight = screenSize.height * 0.12;
+    final buttonHeight = screenSize.height * 0.09;
+    final pageViewHeight = cardHeight + 15;
+
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+          padding: EdgeInsets.symmetric(horizontal: screenSize.width * 0.06, vertical: screenSize.height * 0.04),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -214,17 +223,21 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 opacity: _fadeAnimation,
                 child: Text(
                   "Merhaba,",
-                  style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontSize: 34),
+                  style: TextStyle(fontSize: screenSize.width * 0.08, fontWeight: FontWeight.w700, color: const Color(0xFF2C3E50)),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               FadeTransition(
                 opacity: _fadeAnimation,
                 child: Text(
                   "bugün nasılsın? 🌿",
-                  style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontSize: 34),
+                  style: TextStyle(fontSize: screenSize.width * 0.08, fontWeight: FontWeight.w700, color: const Color(0xFF2C3E50)),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: screenSize.height * 0.015),
               FadeTransition(
                 opacity: _fadeAnimation,
                 child: Text(
@@ -233,51 +246,53 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 ),
               ),
 
-              const SizedBox(height: 32),
+              SizedBox(height: screenSize.height * 0.04),
 
               Row(
                 children: [
-                  Expanded(child: _buildMiniMotivationCard()),
-                  const SizedBox(width: 12),
-                  Expanded(child: _buildWaterTrackerCard()),
+                  Expanded(child: _buildMiniMotivationCard(miniCardHeight)),
+                  SizedBox(width: screenSize.width * 0.03),
+                  Expanded(child: _buildWaterTrackerCard(miniCardHeight)),
                 ],
               ),
 
-              const SizedBox(height: 44),
+              SizedBox(height: screenSize.height * 0.055),
 
               SizedBox(
-                height: 325,
+                height: pageViewHeight,
                 child: PageView(
-                  physics: const BouncingScrollPhysics(),
+                  physics: const ClampingScrollPhysics(), // Optimized from BouncingScrollPhysics
                   controller: PageController(viewportFraction: 0.88),
                   children: [
-                    ScaleTransition(scale: _scaleAnimation, child: _buildStepsCard(context)),
-                    ScaleTransition(scale: _scaleAnimation, child: _buildHeartCard(context)),
-                    ScaleTransition(scale: _scaleAnimation, child: _buildSleepCard(context)),
-                    ScaleTransition(scale: _scaleAnimation, child: _buildStressCard(context)),
+                    RepaintBoundary(child: ScaleTransition(scale: _scaleAnimation, child: _buildStepsCard(context, cardHeight))),
+                    RepaintBoundary(child: ScaleTransition(scale: _scaleAnimation, child: _buildHeartCard(context, cardHeight))),
+                    RepaintBoundary(child: ScaleTransition(scale: _scaleAnimation, child: _buildSleepCard(context, cardHeight))),
+                    RepaintBoundary(child: ScaleTransition(scale: _scaleAnimation, child: _buildStressCard(context, cardHeight))),
                   ],
                 ),
               ),
 
-              const SizedBox(height: 48),
+              SizedBox(height: screenSize.height * 0.06),
 
               _buildPrimaryGradientButton(
                 context,
                 label: "Yapay Zeka Raporu Al",
                 icon: Icons.auto_awesome,
                 onPressed: () => Navigator.pushNamed(context, '/ai_report'),
+                height: buttonHeight,
               ),
 
-              const SizedBox(height: 16),
+              SizedBox(height: screenSize.height * 0.02),
 
               _buildSecondaryOutlineButton(
                 context,
                 label: "Bluetooth Cihazı Tara",
                 icon: Icons.bluetooth,
                 onPressed: () => Navigator.pushNamed(context, '/bluetooth'),
+                height: buttonHeight,
               ),
 
-              const SizedBox(height: 40),
+              SizedBox(height: screenSize.height * 0.05),
             ],
           ),
         ),
@@ -285,40 +300,42 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
-  Widget _glassCard({required Widget child, double? height}) {
+  Widget _glassCard({required Widget child, required double height}) {
     return Container(
       height: height,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.78),
+        color: Colors.white.withValues(alpha: 0.78),
         borderRadius: BorderRadius.circular(32),
-        border: Border.all(color: Colors.white.withOpacity(0.35), width: 1.5),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.35), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.07),
+            color: Colors.black.withValues(alpha: 0.07),
             blurRadius: 35,
             offset: const Offset(0, 18),
           ),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(32),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-          child: child,
+      child: RepaintBoundary(
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(32),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6), // Blur optimized
+            child: child,
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildStepsCard(BuildContext context) {
+  Widget _buildStepsCard(BuildContext context, double height) {
     const int steps = 12456;
     const int goal = 15000;
-    final progress = steps / goal;
+    const progress = steps / goal;
 
     return GestureDetector(
       onTap: () => Navigator.pushNamed(context, '/steps'),
       child: _glassCard(
-        height: 310,
+        height: height,
         child: Padding(
           padding: const EdgeInsets.all(26),
           child: Column(
@@ -335,9 +352,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     child: const Icon(Icons.directions_walk_rounded, size: 42, color: Color(0xFF4CAF50)),
                   ),
                   const SizedBox(width: 16),
-                  const Text(
-                    "Adım Sayısı",
-                    style: TextStyle(fontSize: 19, fontWeight: FontWeight.w600, color: Color(0xFF2C3E50)),
+                  const Flexible(
+                    child: Text(
+                      "Adım Sayısı",
+                      style: TextStyle(fontSize: 19, fontWeight: FontWeight.w600, color: Color(0xFF2C3E50)),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ],
               ),
@@ -347,34 +368,26 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   width: 210,
                   height: 210,
                   child: Stack(
+                    alignment: Alignment.center,
                     children: [
-                      Center(
-                        child: CircularProgressIndicator(
-                          value: progress,
-                          strokeWidth: 11,
-                          backgroundColor: Colors.grey.withOpacity(0.15),
-                          valueColor: const AlwaysStoppedAnimation(Color(0xFF4CAF50)),
-                        ),
+                      CircularProgressIndicator(
+                        value: progress,
+                        strokeWidth: 11,
+                        backgroundColor: Colors.grey.withValues(alpha: 0.15),
+                        valueColor: const AlwaysStoppedAnimation(Color(0xFF4CAF50)),
                       ),
-                      Positioned.fill(
-                        child: Center(
-                          child: Padding(
-                            padding: const EdgeInsets.only(top: 6),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  child: Text(
-                                    steps.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.'),
-                                    style: const TextStyle(fontSize: 31, fontWeight: FontWeight.w700, height: 1),
-                                  ),
-                                ),
-                                Text("hedef $goal", style: const TextStyle(fontSize: 14, color: Colors.grey)),
-                              ],
-                            ),
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            steps.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.'),
+                            style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w800, height: 1.2),
+                            maxLines: 1,
                           ),
-                        ),
+                          const SizedBox(height: 6),
+                          const Text("hedef $goal", style: TextStyle(fontSize: 13, color: Colors.grey, fontWeight: FontWeight.w500)),
+                        ],
                       ),
                     ],
                   ),
@@ -388,11 +401,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
-  Widget _buildHeartCard(BuildContext context) {
+  Widget _buildHeartCard(BuildContext context, double height) {
     return GestureDetector(
       onTap: () => Navigator.pushNamed(context, '/heart'),
       child: _glassCard(
-        height: 310,
+        height: height,
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
@@ -409,9 +422,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     child: const Icon(Icons.monitor_heart_rounded, size: 42, color: Color(0xFFEF5350)),
                   ),
                   const SizedBox(width: 16),
-                  const Text(
-                    "Nabız",
-                    style: TextStyle(fontSize: 19, fontWeight: FontWeight.w600, color: Color(0xFF2C3E50)),
+                  const Flexible(
+                    child: Text(
+                      "Nabız",
+                      style: TextStyle(fontSize: 19, fontWeight: FontWeight.w600, color: Color(0xFF2C3E50)),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ],
               ),
@@ -421,9 +438,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               const SizedBox(height: 16),
               SizedBox(
                 height: 92,
-                child: CustomPaint(
-                  size: const Size(double.infinity, 92),
-                  painter: HeartRateGraphPainter(),
+                child: RepaintBoundary(
+                  child: CustomPaint(
+                    size: const Size(double.infinity, 92),
+                    painter: HeartRateGraphPainter(),
+                  ),
                 ),
               ),
             ],
@@ -433,11 +452,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
-  Widget _buildSleepCard(BuildContext context) {
+  Widget _buildSleepCard(BuildContext context, double height) {
     return GestureDetector(
       onTap: () => Navigator.pushNamed(context, '/sleep'),
       child: _glassCard(
-        height: 310,
+        height: height,
         child: Padding(
           padding: const EdgeInsets.all(26),
           child: Column(
@@ -454,9 +473,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     child: const Icon(Icons.nightlight_round, size: 42, color: Color(0xFF64B5F6)),
                   ),
                   const SizedBox(width: 16),
-                  const Text(
-                    "Uyku",
-                    style: TextStyle(fontSize: 19, fontWeight: FontWeight.w600, color: Color(0xFF2C3E50)),
+                  const Flexible(
+                    child: Text(
+                      "Uyku",
+                      style: TextStyle(fontSize: 19, fontWeight: FontWeight.w600, color: Color(0xFF2C3E50)),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ],
               ),
@@ -470,11 +493,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
-  Widget _buildStressCard(BuildContext context) {
+  Widget _buildStressCard(BuildContext context, double height) {
     return GestureDetector(
       onTap: () => Navigator.pushNamed(context, '/stress'),
       child: _glassCard(
-        height: 310,
+        height: height,
         child: Padding(
           padding: const EdgeInsets.all(26),
           child: Column(
@@ -491,9 +514,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     child: const Icon(Icons.spa_rounded, size: 42, color: Color(0xFF26A69A)),
                   ),
                   const SizedBox(width: 16),
-                  const Text(
-                    "Stres Seviyesi",
-                    style: TextStyle(fontSize: 19, fontWeight: FontWeight.w600, color: Color(0xFF2C3E50)),
+                  const Flexible(
+                    child: Text(
+                      "Stres Seviyesi",
+                      style: TextStyle(fontSize: 19, fontWeight: FontWeight.w600, color: Color(0xFF2C3E50)),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ],
               ),
@@ -512,10 +539,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     required String label,
     required IconData icon,
     required VoidCallback onPressed,
+    required double height,
   }) {
     return Container(
       width: double.infinity,
-      height: 74,
+      height: height,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(32),
         gradient: const LinearGradient(
@@ -525,7 +553,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1C3D32).withOpacity(0.4),
+            color: const Color(0xFF1C3D32).withValues(alpha: 0.4),
             blurRadius: 25,
             offset: const Offset(0, 12),
           ),
@@ -543,9 +571,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           children: [
             Icon(icon, size: 28, color: Colors.white),
             const SizedBox(width: 14),
-            Text(
-              label,
-              style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w700, color: Colors.white),
+            Flexible(
+              child: Text(
+                label,
+                style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w700, color: Colors.white),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
           ],
         ),
@@ -558,11 +590,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     required String label,
     required IconData icon,
     required VoidCallback onPressed,
+    required double height,
   }) {
     return OutlinedButton(
       onPressed: onPressed,
       style: OutlinedButton.styleFrom(
-        minimumSize: const Size(double.infinity, 74),
+        minimumSize: Size(double.infinity, height),
         side: const BorderSide(color: Color(0xFF1C3D32), width: 2.2),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
         foregroundColor: const Color(0xFF1C3D32),
@@ -572,32 +605,39 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         children: [
           Icon(icon, size: 28),
           const SizedBox(width: 14),
-          Text(label, style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w700)),
+          Flexible(
+            child: Text(
+              label,
+              style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w700),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildMiniMotivationCard() {
+  Widget _buildMiniMotivationCard(double height) {
     return _glassCard(
-      height: 100,
+      height: height,
       child: const Padding(
         padding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text("Bugün harikasın! 💪", style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
-            Text("Küçük adımlar, büyük fark yaratır.", style: TextStyle(fontSize: 13, color: Colors.grey)),
+            Text("Küçük adımlar,\nbüyük fark yaratır.", style: TextStyle(fontSize: 13, color: Colors.grey), maxLines: 2, overflow: TextOverflow.ellipsis),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildWaterTrackerCard() {
+  Widget _buildWaterTrackerCard(double height) {
     const double waterProgress = 0.65;
     return _glassCard(
-      height: 100,
+      height: height,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
         child: Row(
@@ -609,11 +649,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text("Su Tüketimi", style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                  const Text("Su Tüketimi", style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis),
                   const SizedBox(height: 4),
                   LinearProgressIndicator(
                     value: waterProgress,
-                    backgroundColor: Colors.grey.withOpacity(0.2),
+                    backgroundColor: Colors.grey.withValues(alpha: 0.2),
                     valueColor: const AlwaysStoppedAnimation(Color(0xFF64B5F6)),
                     minHeight: 7,
                     borderRadius: BorderRadius.circular(99),
@@ -631,14 +671,37 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 }
 
 class HeartRateGraphPainter extends CustomPainter {
+  static const int _pointCount = 48;
+  static const double _baseY = 0.56;
+  static const double _amp1 = 26.0;
+  static const double _freq1 = 0.38;
+  static const double _amp2 = 11.0;
+  static const double _freq2 = 0.91;
+  
+  static final List<Offset> _cachedPoints = [];
+  static double _lastWidth = -1;
+  
+  void _generateCache(double width, double height) {
+    if (_lastWidth == width && _cachedPoints.isNotEmpty) return;
+    
+    _cachedPoints.clear();
+    _lastWidth = width;
+    
+    for (int i = 0; i <= _pointCount; i++) {
+      final x = i * (width / _pointCount);
+      final y = height * _baseY + _amp1 * math.sin(i * _freq1) + _amp2 * math.sin(i * _freq2);
+      _cachedPoints.add(Offset(x, y));
+    }
+  }
+
   @override
   void paint(Canvas canvas, Size size) {
-    final fillPath = Path()..moveTo(0, size.height * 0.65);
-
-    for (int i = 0; i <= 48; i++) {
-      final x = i * (size.width / 48);
-      final y = size.height * 0.56 + 26 * math.sin(i * 0.38) + 11 * math.sin(i * 0.91);
-      fillPath.lineTo(x, y);
+    _generateCache(size.width, size.height);
+    
+    // Gradient background path
+    final fillPath = Path()..moveTo(0, size.height * _baseY);
+    for (final point in _cachedPoints) {
+      fillPath.lineTo(point.dx, point.dy);
     }
     fillPath.lineTo(size.width, size.height);
     fillPath.lineTo(0, size.height);
@@ -647,39 +710,40 @@ class HeartRateGraphPainter extends CustomPainter {
     canvas.drawPath(
       fillPath,
       Paint()
-        ..color = const Color(0xFFEF5350).withOpacity(0.09)
+        ..color = const Color(0xFFEF5350).withValues(alpha: 0.08)
         ..style = PaintingStyle.fill,
     );
 
-    final linePath = Path()..moveTo(0, size.height * 0.65);
-    for (int i = 0; i <= 48; i++) {
-      final x = i * (size.width / 48);
-      final y = size.height * 0.56 + 26 * math.sin(i * 0.38) + 11 * math.sin(i * 0.91);
-      linePath.lineTo(x, y);
+    // Main line path
+    final linePath = Path()..moveTo(0, size.height * _baseY);
+    for (final point in _cachedPoints) {
+      linePath.lineTo(point.dx, point.dy);
     }
 
+    // Glow effect
+    canvas.drawPath(
+      linePath,
+      Paint()
+        ..color = const Color(0xFFEF5350).withValues(alpha: 0.18)
+        ..strokeWidth = 8.0
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
+    );
+
+    // Main line
     canvas.drawPath(
       linePath,
       Paint()
         ..color = const Color(0xFFEF5350)
-        ..strokeWidth = 5.2
+        ..strokeWidth = 4.5
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round,
-    );
-
-    canvas.drawPath(
-      linePath,
-      Paint()
-        ..color = const Color(0xFFEF5350).withOpacity(0.22)
-        ..strokeWidth = 9.5
-        ..style = PaintingStyle.stroke
-        ..strokeCap = StrokeCap.round
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
     );
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(HeartRateGraphPainter oldDelegate) => false;
 }
 
 // ==================== DETAY EKRANLARI ====================
@@ -688,19 +752,28 @@ class StepsDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenSize = MediaQuery.of(context).size;
     return Scaffold(
       appBar: AppBar(title: const Text("Adım Detayları")),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Hero(
-            tag: 'steps_card',
+      body: SingleChildScrollView(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text("12.456", style: Theme.of(context).textTheme.displayLarge),
+                Text(
+                  "12.456",
+                  style: TextStyle(
+                    fontSize: screenSize.width * 0.12,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF2C3E50),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 const Text("adım", style: TextStyle(fontSize: 18, color: Colors.grey)),
-                const SizedBox(height: 40),
+                SizedBox(height: screenSize.height * 0.05),
                 const CircularProgressIndicator(
                   value: 0.83,
                   strokeWidth: 14,
@@ -722,24 +795,35 @@ class HeartDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenSize = MediaQuery.of(context).size;
     return Scaffold(
       appBar: AppBar(title: const Text("Nabız Detayları")),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Hero(
-            tag: 'heart_card',
+      body: SingleChildScrollView(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text("78 bpm", style: Theme.of(context).textTheme.displayLarge),
+                Text(
+                  "78 bpm",
+                  style: TextStyle(
+                    fontSize: screenSize.width * 0.12,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF2C3E50),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 const Text("ortalama nabız", style: TextStyle(fontSize: 18, color: Colors.grey)),
                 const SizedBox(height: 32),
                 SizedBox(
-                  height: 220,
-                  child: CustomPaint(
-                    painter: HeartRateGraphPainter(),
-                    size: const Size(double.infinity, 220),
+                  height: screenSize.height * 0.25,
+                  child: RepaintBoundary(
+                    child: CustomPaint(
+                      painter: HeartRateGraphPainter(),
+                      size: Size(double.infinity, screenSize.height * 0.25),
+                    ),
                   ),
                 ),
               ],
@@ -756,17 +840,26 @@ class SleepDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenSize = MediaQuery.of(context).size;
     return Scaffold(
       appBar: AppBar(title: const Text("Uyku Detayları")),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Hero(
-            tag: 'sleep_card',
+      body: SingleChildScrollView(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text("7s 32dk", style: Theme.of(context).textTheme.displayLarge),
+                Text(
+                  "7s 32dk",
+                  style: TextStyle(
+                    fontSize: screenSize.width * 0.12,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF2C3E50),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 const Text("kaliteli uyku • %81", style: TextStyle(fontSize: 20, color: Color(0xFF4CAF50))),
               ],
             ),
@@ -782,17 +875,26 @@ class StressDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenSize = MediaQuery.of(context).size;
     return Scaffold(
       appBar: AppBar(title: const Text("Stres Detayları")),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Hero(
-            tag: 'stress_card',
+      body: SingleChildScrollView(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text("%28", style: Theme.of(context).textTheme.displayLarge),
+                Text(
+                  "%28",
+                  style: TextStyle(
+                    fontSize: screenSize.width * 0.12,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF2C3E50),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 const Text("Düşük seviye", style: TextStyle(fontSize: 20, color: Color(0xFF26A69A))),
                 const SizedBox(height: 32),
                 const CircularProgressIndicator(
@@ -814,26 +916,40 @@ class AIReportScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenSize = MediaQuery.of(context).size;
     return Scaffold(
       appBar: AppBar(title: const Text("Yapay Zeka Raporu")),
-      body: const Padding(
-        padding: EdgeInsets.all(28),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(screenSize.width * 0.07),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("Bugün harikasın!", style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700)),
-            SizedBox(height: 12),
             Text(
+              "Bugün harikasın!",
+              style: TextStyle(fontSize: screenSize.width * 0.07, fontWeight: FontWeight.w700, color: const Color(0xFF1C3D32)),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            SizedBox(height: screenSize.height * 0.02),
+            const Text(
               "• Adımlar hedefin %83'üne ulaştı\n"
               "• Nabız tamamen normal aralıkta\n"
               "• Uyku kalitesi yüksek\n"
               "• Stres seviyesi çok düşük",
-              style: TextStyle(fontSize: 17, height: 1.6),
+              style: TextStyle(fontSize: 16, height: 1.8, color: Color(0xFF2C3E50), fontWeight: FontWeight.w500),
             ),
-            SizedBox(height: 32),
-            Text(
-              "Öneri: Akşam 20 dakikalık hafif yürüyüş yap, daha derin uyku için ekranı erken kapat.",
-              style: TextStyle(fontSize: 17, color: Color(0xFF1C3D32), fontWeight: FontWeight.w500),
+            SizedBox(height: screenSize.height * 0.04),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1C3D32).withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFF4CAF50).withValues(alpha: 0.3), width: 1.5),
+              ),
+              child: const Text(
+                "💡 Öneri: Akşam 20 dakikalık hafif yürüyüş yap, daha derin uyku için ekranı erken kapat.",
+                style: TextStyle(fontSize: 16, color: Color(0xFF1C3D32), fontWeight: FontWeight.w500, height: 1.6),
+              ),
             ),
           ],
         ),
@@ -911,9 +1027,7 @@ class _BluetoothScanScreenState extends State<BluetoothScanScreen> {
       }
 
       await FlutterBluePlus.startScan(
-        timeout: const Duration(seconds: 12),
-        androidScanMode: AndroidScanMode.balanced,
-        androidUsesFineLocation: false,
+        timeout: const Duration(seconds: 10),
       );
 
       _scanSubscription = FlutterBluePlus.scanResults.listen((results) {
@@ -931,7 +1045,7 @@ class _BluetoothScanScreenState extends State<BluetoothScanScreen> {
         }
       });
 
-      await Future.delayed(const Duration(seconds: 12));
+      await Future.delayed(const Duration(seconds: 10));
       await FlutterBluePlus.stopScan();
     } catch (e) {
       _showMessage("Tarama hatası: $e");
@@ -945,7 +1059,7 @@ class _BluetoothScanScreenState extends State<BluetoothScanScreen> {
     _showMessage("$name ile bağlanılıyor...");
 
     try {
-      await device.connect(timeout: const Duration(seconds: 28), autoConnect: false);
+      await device.connect(timeout: const Duration(seconds: 15));
       final services = await device.discoverServices();
       if (mounted) _showMessage("$name bağlandı! (${services.length} servis)");
     } catch (e) {
@@ -955,6 +1069,7 @@ class _BluetoothScanScreenState extends State<BluetoothScanScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenSize = MediaQuery.of(context).size;
     return Scaffold(
       appBar: AppBar(title: const Text("Bluetooth Cihazları")),
       body: Column(
@@ -974,7 +1089,7 @@ class _BluetoothScanScreenState extends State<BluetoothScanScreen> {
                     ),
                   )
                 : ListView.builder(
-                    padding: const EdgeInsets.all(12),
+                    padding: EdgeInsets.all(screenSize.width * 0.03),
                     itemCount: _scanResults.length,
                     itemBuilder: (context, i) {
                       final result = _scanResults[i];
@@ -982,18 +1097,37 @@ class _BluetoothScanScreenState extends State<BluetoothScanScreen> {
                       final name = device.platformName.isNotEmpty ? device.platformName : "Bilinmeyen cihaz";
 
                       return Card(
-                        margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+                        margin: EdgeInsets.symmetric(
+                          vertical: screenSize.height * 0.008,
+                          horizontal: screenSize.width * 0.02,
+                        ),
+                        elevation: 2,
                         child: ListTile(
-                          leading: const Icon(Icons.bluetooth, color: Color(0xFF1C3D32), size: 32),
-                          title: Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
+                          leading: const Icon(Icons.bluetooth, color: Color(0xFF1C3D32), size: 28),
+                          title: Text(
+                            name,
+                            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                           subtitle: Text(
                             "${device.remoteId}\nRSSI: ${result.rssi} dBm",
-                            style: const TextStyle(fontSize: 13),
+                            style: const TextStyle(fontSize: 12),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          trailing: TextButton(
-                            onPressed: () => _connectToDevice(device),
-                            child: const Text("Bağlan", style: TextStyle(fontWeight: FontWeight.w700)),
+                          trailing: SizedBox(
+                            width: 90,
+                            child: TextButton(
+                              onPressed: () => _connectToDevice(device),
+                              style: TextButton.styleFrom(
+                                foregroundColor: const Color(0xFF1C3D32),
+                              ),
+                              child: const Text("Bağlan", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                            ),
                           ),
+                          contentPadding: EdgeInsets.symmetric(horizontal: screenSize.width * 0.04, vertical: 8),
+                          dense: true,
                         ),
                       );
                     },
@@ -1001,9 +1135,10 @@ class _BluetoothScanScreenState extends State<BluetoothScanScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: _isScanning ? null : _startScan,
-        child: Icon(_isScanning ? Icons.stop : Icons.refresh),
+        icon: Icon(_isScanning ? Icons.stop : Icons.refresh),
+        label: Text(_isScanning ? "Tarama Durduruluyor" : "Yeniden Tara"),
       ),
     );
   }
