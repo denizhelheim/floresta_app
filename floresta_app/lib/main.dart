@@ -11,33 +11,72 @@ void main() {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  static _MyAppState? of(BuildContext context) =>
+      context.findAncestorStateOfType<_MyAppState>();
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  ThemeMode _themeMode = ThemeMode.light;
+
+  void toggleTheme() {
+    setState(() {
+      _themeMode = _themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    final lightTheme = ThemeData(
+      useMaterial3: true,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: const Color(0xFF1C3D32),
+        surface: const Color(0xFFF4FAF7),
+        primary: const Color(0xFF1C3D32),
+        secondary: const Color(0xFF4CAF50),
+      ),
+      textTheme: GoogleFonts.quicksandTextTheme(
+        ThemeData.light().textTheme,
+      ),
+      scaffoldBackgroundColor: const Color(0xFFF4FAF7),
+      appBarTheme: const AppBarTheme(
+        elevation: 0,
+        backgroundColor: Color(0xFF1C3D32),
+        foregroundColor: Colors.white,
+        centerTitle: true,
+      ),
+    );
+
+    final darkTheme = ThemeData(
+      brightness: Brightness.dark,
+      useMaterial3: true,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: const Color(0xFF1C3D32),
+        brightness: Brightness.dark,
+      ),
+      textTheme: GoogleFonts.quicksandTextTheme(
+        ThemeData.dark().textTheme,
+      ),
+      scaffoldBackgroundColor: const Color(0xFF121212),
+      appBarTheme: const AppBarTheme(
+        elevation: 0,
+        backgroundColor: Color(0xFF1C3D32),
+        foregroundColor: Colors.white,
+        centerTitle: true,
+      ),
+    );
+
     return MaterialApp(
       title: 'Floresta',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF1C3D32),
-          surface: const Color(0xFFF4FAF7),
-          primary: const Color(0xFF1C3D32),
-          secondary: const Color(0xFF4CAF50),
-        ),
-        textTheme: GoogleFonts.quicksandTextTheme(
-          ThemeData.light().textTheme,
-        ),
-        scaffoldBackgroundColor: const Color(0xFFF4FAF7),
-        appBarTheme: const AppBarTheme(
-          elevation: 0,
-          backgroundColor: Color(0xFF1C3D32),
-          foregroundColor: Colors.white,
-          centerTitle: true,
-        ),
-      ),
+      theme: lightTheme,
+      darkTheme: darkTheme,
+      themeMode: _themeMode,
       home: const SplashScreen(),
       routes: {
         '/home': (context) => const HomeScreen(),
@@ -63,6 +102,11 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
+
+  // arrow bounce
+  late AnimationController _arrowController;
+  late Animation<Offset> _arrowOffset;
+
   String greeting = "";
 
   @override
@@ -77,6 +121,13 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       parent: _controller,
       curve: Curves.easeOut,
     );
+
+    _arrowController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    )..repeat(reverse: true);
+    _arrowOffset = Tween<Offset>(begin: Offset.zero, end: const Offset(0, -0.15))
+        .animate(CurvedAnimation(parent: _arrowController, curve: Curves.easeInOut));
 
     _setGreeting();
   }
@@ -150,15 +201,21 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                     SizedBox(height: screenHeight * 0.15),
                     Column(
                       children: [
-                        const Icon(Icons.keyboard_arrow_up_rounded, size: 48, color: Colors.white),
-                        Text(
-                          "Yukarı kaydır",
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.white.withValues(alpha: 0.8),
-                            letterSpacing: 1.5,
-                          ),
+                        SlideTransition(
+                      position: _arrowOffset,
+                      child: const Icon(Icons.keyboard_arrow_up_rounded, size: 48, color: Colors.white),
+                    ),
+                    SlideTransition(
+                      position: _arrowOffset,
+                      child: Text(
+                        "Yukarı kaydır",
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.white.withValues(alpha: 0.8),
+                          letterSpacing: 1.5,
                         ),
+                      ),
+                    ),
                       ],
                     ),
                   ],
@@ -212,118 +269,150 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     final buttonHeight = screenSize.height * 0.09;
     final pageViewHeight = cardHeight + 15;
 
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+    final onSurface70 = onSurface.withOpacity(0.7);
+
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: screenSize.width * 0.06, vertical: screenSize.height * 0.04),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              FadeTransition(
-                opacity: _fadeAnimation,
-                child: Text(
-                  "Merhaba,",
-                  style: TextStyle(
-                    fontSize: screenSize.width * 0.07,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF2C3E50),
-                    height: 1.2,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+          child: FadeTransition(
+            opacity: _fadeAnimation,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        "Merhaba,",
+                        style: TextStyle(
+                          fontSize: screenSize.width * 0.07,
+                          fontWeight: FontWeight.w700,
+                          color: onSurface,
+                          height: 1.2,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () {
+                        MyApp.of(context)?.toggleTheme();
+                      },
+                      icon: Icon(
+                        Theme.of(context).brightness == Brightness.dark
+                            ? Icons.wb_sunny
+                            : Icons.nights_stay,
+                        color: onSurface,
+                      ),
+                      tooltip: "Karanlık/aydınlık modu",
+                    ),
+                  ],
                 ),
-              ),
-              FadeTransition(
-                opacity: _fadeAnimation,
-                child: Text(
+                Text(
                   "bugün nasılsın? 🌿",
                   style: TextStyle(
                     fontSize: screenSize.width * 0.07,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF2C3E50),
+                    color: onSurface,
                     height: 1.2,
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-              ),
-              SizedBox(height: screenSize.height * 0.015),
-              FadeTransition(
-                opacity: _fadeAnimation,
-                child: Text(
+                SizedBox(height: screenSize.height * 0.015),
+                Text(
                   "Sağlık yolculuğun burada başlıyor",
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey[600]),
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: onSurface70),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-              ),
 
-              SizedBox(height: screenSize.height * 0.04),
+                SizedBox(height: screenSize.height * 0.04),
 
-              Row(
-                children: [
-                  Expanded(child: _buildMiniMotivationCard(miniCardHeight)),
-                  SizedBox(width: screenSize.width * 0.03),
-                  Expanded(child: _buildWaterTrackerCard(miniCardHeight)),
-                ],
-              ),
-
-              SizedBox(height: screenSize.height * 0.055),
-
-              SizedBox(
-                height: pageViewHeight,
-                child: PageView(
-                  physics: const ClampingScrollPhysics(), // Optimized from BouncingScrollPhysics
-                  controller: PageController(viewportFraction: 0.88),
+                Row(
                   children: [
-                    RepaintBoundary(child: ScaleTransition(scale: _scaleAnimation, child: _buildStepsCard(context, cardHeight))),
-                    RepaintBoundary(child: ScaleTransition(scale: _scaleAnimation, child: _buildHeartCard(context, cardHeight))),
-                    RepaintBoundary(child: ScaleTransition(scale: _scaleAnimation, child: _buildSleepCard(context, cardHeight))),
-                    RepaintBoundary(child: ScaleTransition(scale: _scaleAnimation, child: _buildStressCard(context, cardHeight))),
+                    Expanded(child: _buildMiniMotivationCard(miniCardHeight, context)),
+                    SizedBox(width: screenSize.width * 0.03),
+                    Expanded(child: _buildWaterTrackerCard(miniCardHeight, context)),
                   ],
                 ),
-              ),
 
-              SizedBox(height: screenSize.height * 0.06),
+                SizedBox(height: screenSize.height * 0.055),
 
-              _buildPrimaryGradientButton(
-                context,
-                label: "Yapay Zeka Raporu Al",
-                icon: Icons.auto_awesome,
-                onPressed: () => Navigator.pushNamed(context, '/ai_report'),
-                height: buttonHeight,
-              ),
+                SizedBox(
+                  height: pageViewHeight,
+                  child: PageView(
+                    physics: const ClampingScrollPhysics(), // Optimized from BouncingScrollPhysics
+                    controller: PageController(viewportFraction: 0.88),
+                    children: [
+                      RepaintBoundary(child: ScaleTransition(scale: _scaleAnimation, child: _buildStepsCard(context, cardHeight))),
+                      RepaintBoundary(child: ScaleTransition(scale: _scaleAnimation, child: _buildHeartCard(context, cardHeight))),
+                      RepaintBoundary(child: ScaleTransition(scale: _scaleAnimation, child: _buildSleepCard(context, cardHeight))),
+                      RepaintBoundary(child: ScaleTransition(scale: _scaleAnimation, child: _buildStressCard(context, cardHeight))),
+                    ],
+                  ),
+                ),
 
-              SizedBox(height: screenSize.height * 0.02),
+                SizedBox(height: screenSize.height * 0.06),
 
-              _buildSecondaryOutlineButton(
-                context,
-                label: "Bluetooth Cihazı Tara",
-                icon: Icons.bluetooth,
-                onPressed: () => Navigator.pushNamed(context, '/bluetooth'),
-                height: buttonHeight,
-              ),
+                // bluetooth is now the primary action on the home screen
+                _buildSecondaryOutlineButton(
+                  context,
+                  label: "Bluetooth Cihazı Tara",
+                  icon: Icons.bluetooth,
+                  onPressed: () => Navigator.pushNamed(context, '/bluetooth'),
+                  height: buttonHeight,
+                ),
 
-              SizedBox(height: screenSize.height * 0.05),
-            ],
+                SizedBox(height: screenSize.height * 0.02),
+
+                _buildPrimaryGradientButton(
+                  context,
+                  label: "Yapay Zeka Raporu Al",
+                  icon: Icons.auto_awesome,
+                  onPressed: () => Navigator.pushNamed(context, '/ai_report'),
+                  height: buttonHeight,
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFFFD700), Color(0xFFFFA726)],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
+                ),
+
+                SizedBox(height: screenSize.height * 0.05),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _glassCard({required Widget child, required double height}) {
+  Widget _glassCard({
+    required Widget child,
+    required double height,
+    required BuildContext context,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final baseColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+    final borderColor = isDark
+        ? const Color(0xFF2A2A2A).withValues(alpha: 0.6)
+        : Colors.white.withValues(alpha: 0.35);
+
     return Container(
       height: height,
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.78),
+        color: baseColor.withValues(alpha: 0.85),
         borderRadius: BorderRadius.circular(32),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.35), width: 1.5),
+        border: Border.all(color: borderColor, width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.07),
-            blurRadius: 35,
-            offset: const Offset(0, 18),
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 45,
+            offset: const Offset(0, 24),
           ),
         ],
       ),
@@ -344,10 +433,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     const int goal = 15000;
     const progress = steps / goal;
 
+    // mimic other cards: large text + subtitle with chart underneath
     return GestureDetector(
       onTap: () => Navigator.pushNamed(context, '/steps'),
       child: _glassCard(
         height: height,
+        context: context,
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: LayoutBuilder(
@@ -355,10 +446,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               final screenWidth = MediaQuery.of(context).size.width;
               final maxRingSize = math.min(constraints.maxHeight * 0.45, 180.0);
               final ringSize = math.min(maxRingSize, screenWidth * 0.45);
-              
+
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
                 children: [
                   Row(
                     children: [
@@ -371,59 +461,52 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                         child: const Icon(Icons.directions_walk_rounded, size: 38, color: Color(0xFF4CAF50)),
                       ),
                       const SizedBox(width: 12),
-                      const Flexible(
+                      Flexible(
                         child: Text(
                           "Adım Sayısı",
-                          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: Color(0xFF2C3E50), height: 1.2),
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w600,
+                            color: Theme.of(context).colorScheme.onSurface,
+                            height: 1.2,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const Spacer(),
+                  Text(
+                    steps.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.'),
+                    style: TextStyle(
+                      fontSize: 36,
+                      fontWeight: FontWeight.w700,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    "hedef $goal (%${(progress * 100).round()})",
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
                   Center(
                     child: SizedBox(
                       width: ringSize,
                       height: ringSize,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          CircularProgressIndicator(
-                            value: progress,
-                            strokeWidth: math.max(5.5, ringSize * 0.05),
-                            backgroundColor: Colors.grey.withValues(alpha: 0.15),
-                            valueColor: const AlwaysStoppedAnimation(Color(0xFF4CAF50)),
-                          ),
-                          Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                steps.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.'),
-                                style: TextStyle(
-                                  fontSize: math.max(24, ringSize * 0.16),
-                                  fontWeight: FontWeight.w800,
-                                  height: 1.1,
-                                ),
-                                maxLines: 1,
-                              ),
-                              SizedBox(height: math.max(4, ringSize * 0.04)),
-                              Text(
-                                "hedef $goal",
-                                style: TextStyle(
-                                  fontSize: math.max(11, ringSize * 0.07),
-                                  color: Colors.grey,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
+                      child: CircularProgressIndicator(
+                        value: progress,
+                        strokeWidth: math.max(5.5, ringSize * 0.05),
+                        backgroundColor: Colors.grey.withValues(alpha: 0.15),
+                        valueColor: const AlwaysStoppedAnimation(Color(0xFF4CAF50)),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 8),
                 ],
               );
             },
@@ -438,6 +521,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       onTap: () => Navigator.pushNamed(context, '/heart'),
       child: _glassCard(
         height: height,
+        context: context,
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
@@ -454,10 +538,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     child: const Icon(Icons.monitor_heart_rounded, size: 38, color: Color(0xFFEF5350)),
                   ),
                   const SizedBox(width: 12),
-                  const Flexible(
+                  Flexible(
                     child: Text(
                       "Nabız",
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Color(0xFF2C3E50), height: 1.2),
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface, height: 1.2),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -465,15 +549,20 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 ],
               ),
               const Spacer(),
-              const Text("78 bpm", style: TextStyle(fontSize: 36, fontWeight: FontWeight.w700, color: Color(0xFF2C3E50))),
-              const Text("Normal aralıkta", style: TextStyle(fontSize: 14, color: Colors.grey, height: 1.2)),
+              Text("78 bpm", style: TextStyle(fontSize: 36, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface)),
+
+              Text("Normal aralıkta", style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7), height: 1.2)),
+
+
               const SizedBox(height: 14),
               SizedBox(
                 height: 80,
                 child: RepaintBoundary(
                   child: CustomPaint(
                     size: const Size(double.infinity, 80),
-                    painter: HeartRateGraphPainter(),
+                    painter: HeartRateGraphPainter(
+                      tickColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.35),
+                    ),
                   ),
                 ),
               ),
@@ -489,6 +578,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       onTap: () => Navigator.pushNamed(context, '/sleep'),
       child: _glassCard(
         height: height,
+        context: context,
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
@@ -505,10 +595,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     child: const Icon(Icons.nightlight_round, size: 38, color: Color(0xFF64B5F6)),
                   ),
                   const SizedBox(width: 12),
-                  const Flexible(
+                  Flexible(
                     child: Text(
                       "Uyku",
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Color(0xFF2C3E50), height: 1.2),
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface, height: 1.2),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -516,7 +606,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 ],
               ),
               const Spacer(),
-              const Text("7s 32dk", style: TextStyle(fontSize: 36, fontWeight: FontWeight.w700, color: Color(0xFF2C3E50))),
+              Text("7s 32dk", style: TextStyle(fontSize: 36, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface)),
+
               const Text("Kaliteli • %81", style: TextStyle(fontSize: 14, color: Color(0xFF4CAF50), fontWeight: FontWeight.w600, height: 1.2)),
             ],
           ),
@@ -530,6 +621,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       onTap: () => Navigator.pushNamed(context, '/stress'),
       child: _glassCard(
         height: height,
+        context: context,
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
@@ -546,10 +638,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     child: const Icon(Icons.spa_rounded, size: 38, color: Color(0xFF26A69A)),
                   ),
                   const SizedBox(width: 12),
-                  const Flexible(
+                  Flexible(
                     child: Text(
                       "Stres",
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Color(0xFF2C3E50), height: 1.2),
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface, height: 1.2),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -557,8 +649,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 ],
               ),
               const Spacer(),
-              const Text("%28", style: TextStyle(fontSize: 36, fontWeight: FontWeight.w700, color: Color(0xFF2C3E50))),
-              const Text("Düşük • Rahat", style: TextStyle(fontSize: 14, color: Colors.grey, height: 1.2)),
+              Text("%28", style: TextStyle(fontSize: 36, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface)),
+
+              Text("Düşük • Rahat", style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7), height: 1.2)),
+
             ],
           ),
         ),
@@ -572,22 +666,25 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     required IconData icon,
     required VoidCallback onPressed,
     required double height,
+    Gradient? gradient,
   }) {
+    final defaultGradient = const LinearGradient(
+      colors: [Color(0xFF1C3D32), Color(0xFF2E8B57)],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+
     return Container(
       width: double.infinity,
       height: height,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(32),
-        gradient: const LinearGradient(
-          colors: [Color(0xFF1C3D32), Color(0xFF2E8B57)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        gradient: gradient ?? defaultGradient,
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1C3D32).withValues(alpha: 0.4),
-            blurRadius: 25,
-            offset: const Offset(0, 12),
+            color: const Color(0xFF1C3D32).withValues(alpha: 0.3),
+            blurRadius: 45,
+            offset: const Offset(0, 24),
           ),
         ],
       ),
@@ -606,7 +703,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             Flexible(
               child: Text(
                 label,
-                style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w700, color: Colors.white),
+                style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w800, color: Colors.white),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -650,51 +747,79 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
-  Widget _buildMiniMotivationCard(double height) {
+  Widget _buildMiniMotivationCard(double height, BuildContext context) {
     return _glassCard(
       height: height,
+      context: context,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final isNarrow = constraints.maxWidth < 140;
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  "Bugün harikasın! 💪",
-                  style: TextStyle(
-                    fontSize: isNarrow ? 13 : 15,
-                    fontWeight: FontWeight.w700,
-                    height: 1.2,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+          return Stack(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // break title and emoji so the icon never gets clipped
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            "Bugün harikasın!",
+                            style: TextStyle(
+                              fontSize: isNarrow ? 13 : 15,
+                              fontWeight: FontWeight.w700,
+                              height: 1.2,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.visible,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          "💪",
+                          style: TextStyle(fontSize: isNarrow ? 13 : 15),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "Küçük adımlar,\nbüyük fark yaratır.",
+                      style: TextStyle(
+                        fontSize: isNarrow ? 11 : 13,
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                        height: 1.3,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  "Küçük adımlar,\nbüyük fark yaratır.",
-                  style: TextStyle(
-                    fontSize: isNarrow ? 11 : 13,
-                    color: Colors.grey,
-                    height: 1.3,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+              ),
+              // little leaf in the top-right corner for visual balance
+              Positioned(
+                top: 8,
+                right: 8,
+                child: Text(
+                  '🌿',
+                  style: TextStyle(fontSize: isNarrow ? 14 : 16),
                 ),
-              ],
-            ),
+              ),
+            ],
           );
         },
       ),
     );
   }
 
-  Widget _buildWaterTrackerCard(double height) {
+  Widget _buildWaterTrackerCard(double height, BuildContext context) {
     const double waterProgress = 0.65;
     return _glassCard(
       height: height,
+      context: context,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final isNarrow = constraints.maxWidth < 180;
@@ -705,14 +830,14 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
+                      const Row(
                         children: [
-                          const Icon(Icons.water_drop_rounded, size: 32, color: Color(0xFF64B5F6)),
-                          const SizedBox(width: 8),
+                          Icon(Icons.water_drop_rounded, size: 32, color: Color(0xFF64B5F6)),
+                          SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               "Su Tüketimi",
-                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -720,18 +845,27 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                         ],
                       ),
                       const SizedBox(height: 4),
-                      LinearProgressIndicator(
-                        value: waterProgress,
-                        backgroundColor: Colors.grey.withValues(alpha: 0.2),
-                        valueColor: const AlwaysStoppedAnimation(Color(0xFF64B5F6)),
-                        minHeight: 6,
-                        borderRadius: BorderRadius.circular(99),
+                      ShaderMask(
+                        shaderCallback: (rect) {
+                          return const LinearGradient(
+                            colors: [Color(0xFF64B5F6), Color(0xFF81D4FA)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ).createShader(rect);
+                        },
+                        child: LinearProgressIndicator(
+                          value: waterProgress,
+                          backgroundColor: Colors.grey.withValues(alpha: 0.2),
+                          valueColor: const AlwaysStoppedAnimation(Colors.white),
+                          minHeight: 6,
+                          borderRadius: BorderRadius.circular(99),
+                        ),
                       ),
                       Align(
                         alignment: Alignment.centerRight,
                         child: Text(
                           "${(waterProgress * 100).round()}%",
-                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
                         ),
                       ),
                     ],
@@ -752,12 +886,22 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                               overflow: TextOverflow.ellipsis,
                             ),
                             const SizedBox(height: 4),
-                            LinearProgressIndicator(
-                              value: waterProgress,
-                              backgroundColor: Colors.grey.withValues(alpha: 0.2),
-                              valueColor: const AlwaysStoppedAnimation(Color(0xFF64B5F6)),
-                              minHeight: 7,
-                              borderRadius: BorderRadius.circular(99),
+                            // gradient-filled progress bar for a more dynamic look
+                            ShaderMask(
+                              shaderCallback: (rect) {
+                                return const LinearGradient(
+                                  colors: [Color(0xFF64B5F6), Color(0xFF81D4FA)],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ).createShader(rect);
+                              },
+                              child: LinearProgressIndicator(
+                                value: waterProgress,
+                                backgroundColor: Colors.grey.withValues(alpha: 0.2),
+                                valueColor: const AlwaysStoppedAnimation(Colors.white),
+                                minHeight: 7,
+                                borderRadius: BorderRadius.circular(99),
+                              ),
                             ),
                           ],
                         ),
@@ -765,7 +909,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       const SizedBox(width: 10),
                       Text(
                         "${(waterProgress * 100).round()}%",
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
                       ),
                     ],
                   ),
@@ -777,6 +921,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 }
 
 class HeartRateGraphPainter extends CustomPainter {
+  final Color tickColor;
+
+  HeartRateGraphPainter({required this.tickColor});
+
   static const int _pointCount = 48;
   static const double _baseY = 0.56;
   static const double _amp1 = 26.0;
@@ -826,6 +974,17 @@ class HeartRateGraphPainter extends CustomPainter {
       linePath.lineTo(point.dx, point.dy);
     }
 
+    // draw very thin hour tick markers under baseline
+    final tickPaint = Paint()
+      ..color = tickColor
+      ..strokeWidth = 1;
+    final tickY = size.height * _baseY + 6;
+    const tickCount = 24;
+    for (int i = 0; i <= tickCount; i++) {
+      final x = i * (size.width / tickCount);
+      canvas.drawLine(Offset(x, tickY), Offset(x, tickY + 4), tickPaint);
+    }
+
     // Glow effect
     canvas.drawPath(
       linePath,
@@ -846,6 +1005,25 @@ class HeartRateGraphPainter extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round,
     );
+
+    // live-data glowing point at the end
+    if (_cachedPoints.isNotEmpty) {
+      final last = _cachedPoints.last;
+      // outer glow
+      canvas.drawCircle(
+        last,
+        8,
+        Paint()
+          ..color = const Color(0xFFFFEBEE).withOpacity(0.6)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
+      );
+      // inner solid
+      canvas.drawCircle(
+        last,
+        4,
+        Paint()..color = const Color(0xFFEF5350),
+      );
+    }
   }
 
   @override
@@ -873,12 +1051,12 @@ class StepsDetailScreen extends StatelessWidget {
                   style: TextStyle(
                     fontSize: screenSize.width * 0.12,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF2C3E50),
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const Text("adım", style: TextStyle(fontSize: 18, color: Colors.grey)),
+                Text("adım", style: TextStyle(fontSize: 18, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7))),
                 SizedBox(height: screenSize.height * 0.05),
                 const CircularProgressIndicator(
                   value: 0.83,
@@ -916,18 +1094,20 @@ class HeartDetailScreen extends StatelessWidget {
                   style: TextStyle(
                     fontSize: screenSize.width * 0.12,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF2C3E50),
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const Text("ortalama nabız", style: TextStyle(fontSize: 18, color: Colors.grey)),
+                Text("ortalama nabız", style: TextStyle(fontSize: 18, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7))),
                 const SizedBox(height: 32),
                 SizedBox(
                   height: screenSize.height * 0.25,
                   child: RepaintBoundary(
                     child: CustomPaint(
-                      painter: HeartRateGraphPainter(),
+                      painter: HeartRateGraphPainter(
+                        tickColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.35),
+                      ),
                       size: Size(double.infinity, screenSize.height * 0.25),
                     ),
                   ),
@@ -961,7 +1141,7 @@ class SleepDetailScreen extends StatelessWidget {
                   style: TextStyle(
                     fontSize: screenSize.width * 0.12,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF2C3E50),
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -996,7 +1176,7 @@ class StressDetailScreen extends StatelessWidget {
                   style: TextStyle(
                     fontSize: screenSize.width * 0.12,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF2C3E50),
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -1032,29 +1212,29 @@ class AIReportScreen extends StatelessWidget {
           children: [
             Text(
               "Bugün harikasın!",
-              style: TextStyle(fontSize: screenSize.width * 0.07, fontWeight: FontWeight.w700, color: const Color(0xFF1C3D32)),
+              style: TextStyle(fontSize: screenSize.width * 0.07, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
             SizedBox(height: screenSize.height * 0.02),
-            const Text(
+            Text(
               "• Adımlar hedefin %83'üne ulaştı\n"
               "• Nabız tamamen normal aralıkta\n"
               "• Uyku kalitesi yüksek\n"
               "• Stres seviyesi çok düşük",
-              style: TextStyle(fontSize: 16, height: 1.8, color: Color(0xFF2C3E50), fontWeight: FontWeight.w500),
+              style: TextStyle(fontSize: 16, height: 1.8, color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w500),
             ),
             SizedBox(height: screenSize.height * 0.04),
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFF1C3D32).withValues(alpha: 0.05),
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.05),
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFF4CAF50).withValues(alpha: 0.3), width: 1.5),
+                border: Border.all(color: Theme.of(context).colorScheme.secondary.withOpacity(0.3), width: 1.5),
               ),
-              child: const Text(
+              child: Text(
                 "💡 Öneri: Akşam 20 dakikalık hafif yürüyüş yap, daha derin uyku için ekranı erken kapat.",
-                style: TextStyle(fontSize: 16, color: Color(0xFF1C3D32), fontWeight: FontWeight.w500, height: 1.6),
+                style: TextStyle(fontSize: 16, color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w500, height: 1.6),
               ),
             ),
           ],
@@ -1134,8 +1314,6 @@ class _BluetoothScanScreenState extends State<BluetoothScanScreen> {
 
       await FlutterBluePlus.startScan(
         timeout: const Duration(seconds: 10),
-        androidScanMode: AndroidScanMode.lowLatency,
-        androidUsesFineLocation: false,
       );
 
       _scanSubscription = FlutterBluePlus.scanResults.listen((results) {
@@ -1167,7 +1345,7 @@ class _BluetoothScanScreenState extends State<BluetoothScanScreen> {
     _showMessage("$name ile bağlanılıyor...");
 
     try {
-      await device.connect(timeout: const Duration(seconds: 15), autoConnect: false);
+      await device.connect(timeout: const Duration(seconds: 15));
       final services = await device.discoverServices();
       if (mounted) _showMessage("$name bağlandı! (${services.length} servis)");
     } catch (e) {
@@ -1185,14 +1363,15 @@ class _BluetoothScanScreenState extends State<BluetoothScanScreen> {
           if (_isScanning) const LinearProgressIndicator(minHeight: 3),
           Expanded(
             child: _scanResults.isEmpty && !_isScanning
-                ? const Center(
+                ? Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.bluetooth_searching, size: 72, color: Colors.grey),
+                        Icon(Icons.bluetooth_searching, size: 72, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4)),
+
                         SizedBox(height: 20),
                         Text("Cihaz bulunamadı", style: TextStyle(fontSize: 18)),
-                        Text("Yenilemek için butona bas", style: TextStyle(fontSize: 14, color: Colors.grey)),
+                        Text("Yenilemek için butona bas", style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7))),
                       ],
                     ),
                   )
@@ -1211,7 +1390,7 @@ class _BluetoothScanScreenState extends State<BluetoothScanScreen> {
                         ),
                         elevation: 2,
                         child: ListTile(
-                          leading: const Icon(Icons.bluetooth, color: Color(0xFF1C3D32), size: 28),
+                          leading: Icon(Icons.bluetooth, color: Theme.of(context).colorScheme.onSurface, size: 28),
                           title: Text(
                             name,
                             style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
@@ -1229,7 +1408,7 @@ class _BluetoothScanScreenState extends State<BluetoothScanScreen> {
                             child: TextButton(
                               onPressed: () => _connectToDevice(device),
                               style: TextButton.styleFrom(
-                                foregroundColor: const Color(0xFF1C3D32),
+                                foregroundColor: Theme.of(context).colorScheme.onSurface,
                               ),
                               child: const Text("Bağlan", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
                             ),
